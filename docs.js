@@ -15,5 +15,4 @@ require('mdoc').run({
 
     return strings[0] + ". " + title
   }
-  //parsingFunction: require('marked')
 })
