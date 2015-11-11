@@ -4,7 +4,7 @@ require('mdoc').run({
   outputDir: 'dist',
 	indexContentPath: "source/1_index.md",
   exclude: '.*,*.go',
-	baseTitle: 'volplugin Documentation',
+	baseTitle: 'Contiv Documentation',
   mapTocName: function(filename, tocObj, title) {
     dirs = filename.split('/')
     strings = dirs[dirs.length-1].split('_')
