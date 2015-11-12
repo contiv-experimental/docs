@@ -1,5 +1,17 @@
-# Welcome!
+# Documentation - Contiv Tools 
 
+This page describes the command line user interface for various contiv tools. The CLI
+utilizes the REST interface to a cluster-wide master entity that can be accessible to
+any automation tool.
+
+## Contiv Networking
+[netplugin](https://github.com/contiv/netplugin) allows cluster wide connectivity
+and policy controls for container networking across a multi-host cluster. If you are
+interested in contributing to the project or learn more about the architecture, please
+see the [README](https://github.com/contiv/netplugin/blob/master/README.md) for 
+more information.
+
+## Contiv Storage
 [volplugin](https://github.com/contiv/volplugin) controls
 [Ceph](http://ceph.com/) RBD devices with a master/slave model to orchestrate
 the mounting and cross-host remounting of volumes scheduled with containers.
