@@ -1,8 +1,11 @@
+IMG_FILES := `find source/ -name "*.jpg" -o -name "*.png"`
+
 build-docs: install-docs
 	@echo "To build the documentation, run install-docs first."
 	rm -rf dist
 	mkdir -p dist
 	node docs.js
+	for i in "$(IMG_FILES)"; do (cp $$i dist || exit 1); done
 
 reflex:
 	@echo 'To use this task, `go get github.com/cespare/reflex`'
