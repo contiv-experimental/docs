@@ -1,4 +1,4 @@
-# Documentation - Contiv Tools 
+# Contiv Tools 
 
 This page describes the command line user interface for various contiv tools. The CLI
 utilizes the REST interface to a cluster-wide master entity that can be accessible to

@@ -1,4 +1,4 @@
-# Netplugin
+# netplugin
 
 ## About
 Contiv netplugin is a generic networking plugin that is designed to provide multi host policy based networking for containerized applications.
