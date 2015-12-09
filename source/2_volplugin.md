@@ -159,7 +159,7 @@ Here is an example:
 ```javascript
 {
   "default-options": {
-    "size": 10,
+    "size": "10MB",
     "snapshots": true,
     "snapshot": {
       "frequency": "30m",
@@ -187,7 +187,7 @@ Let's go through what these parameters mean.
 	"Driver Options" below)
   * `pool`: this option is **required**. It specifies the ceph pool volumes
     will be added to by default.
-  * `size`: the size of the volume, in MB.
+  * `size`: the size of the volume. Required is a unit of measurement like `GB`, `KB`, `MB` etc.
   * `snapshots`: use the snapshots facility.
   * `snapshot`: sub-level configuration for snapshots
     * `frequency`: the frequency between snapshots in Go's [duration notation](https://golang.org/pkg/time/#ParseDuration)
