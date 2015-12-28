@@ -51,7 +51,7 @@ Ensure ceph is fully operational, and that the `rbd` tool works as root.
 1. Start volmaster in debug mode (as root): `volmaster --debug &`
     * volmaster has a debug mode as well, but it's really noisy, so avoid using
     it with background processes. volplugin currently connects to volmaster
-    using port 9095, but this will be variable in the future.
+    using port 9005, but this will be variable in the future.
 1. Start volsupervisor (as root): `volsupervisor &`
     * Note that debug mode for this tool is very noisy and is not recommended.
 1. Start volplugin in debug mode (as root): `volplugin --debug &`
