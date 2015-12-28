@@ -11,7 +11,7 @@ before attempting these instructions.
 
 Clone and build the project: 
 
-* `git clone github.com/contiv/volplugin`
+* `git clone https://github.com/contiv/volplugin.git`
 * `make run-build`
   * This will install some utilities for building the software in your
     `$GOPATH`, as well as the `volmaster`, `volplugin` and `volcli`
@@ -19,7 +19,7 @@ Clone and build the project:
 
 #### Everywhere else (with a VM):
 
-* `git clone github.com/contiv/volplugin`
+* `git clone https://github.com/contiv/volplugin.git`
 * `make start`
 
 The build and each binary will be on the VM in `/opt/golang/bin`.
@@ -44,18 +44,18 @@ Ensure ceph is fully operational, and that the `rbd` tool works as root.
 1. Start etcd: `etcd &>/dev/null &`
 1. Upload a tenant policy with `volcli tenant upload tenant1`. It accepts the
    policy from stdin.
-  * You can find some examples of policy in
+    * You can find some examples of policy in
     [systemtests/testdata](https://github.com/contiv/volplugin/tree/master/systemtests/testdata).
-  * If you just want a quick start without configuring it yourself: 
-    * `cat systemtests/testdata/intent1.json | volcli tenant upload tenant1`
+    * If you just want a quick start without configuring it yourself: 
+        * `cat systemtests/testdata/intent1.json | volcli tenant upload tenant1`
 1. Start volmaster in debug mode (as root): `volmaster --debug &`
-  * volmaster has a debug mode as well, but it's really noisy, so avoid using
+    * volmaster has a debug mode as well, but it's really noisy, so avoid using
     it with background processes. Volplugin currently runs on port 8080, but
     this will be variable in the future.
 1. Start volsupervisor (as root): `volsupervisor &`
-  * Note that debug mode for this tool is very noisy and is not recommended.
+    * Note that debug mode for this tool is very noisy and is not recommended.
 1. Start volplugin in debug mode (as root): `volplugin --debug &`
-  * If you run volplugin on multiple hosts, you can use the `--master` flag to
+    * If you run volplugin on multiple hosts, you can use the `--master` flag to
     provide a ip:port pair to connect to over http. By default it connects to
     `127.0.0.1:8080`.
 
