@@ -50,14 +50,14 @@ Ensure ceph is fully operational, and that the `rbd` tool works as root.
         * `cat systemtests/testdata/intent1.json | volcli tenant upload tenant1`
 1. Start volmaster in debug mode (as root): `volmaster --debug &`
     * volmaster has a debug mode as well, but it's really noisy, so avoid using
-    it with background processes. Volplugin currently runs on port 8080, but
-    this will be variable in the future.
+    it with background processes. volplugin currently connects to volmaster
+    using port 9095, but this will be variable in the future.
 1. Start volsupervisor (as root): `volsupervisor &`
     * Note that debug mode for this tool is very noisy and is not recommended.
 1. Start volplugin in debug mode (as root): `volplugin --debug &`
     * If you run volplugin on multiple hosts, you can use the `--master` flag to
     provide a ip:port pair to connect to over http. By default it connects to
-    `127.0.0.1:8080`.
+    `127.0.0.1:9005`.
 
 ### Run Stuff!
 
@@ -111,7 +111,7 @@ target.
 
 ### Network Architecture
 
-`volmaster`, by default, listens on `0.0.0.0:8080`. It provides a REST
+`volmaster`, by default, listens on `0.0.0.0:9005`. It provides a REST
 interface to each of its operations that are used both by `volplugin` and
 `volcli`. It connects to etcd at `127.0.0.1:2379`, which you can change by
 supplying `--etcd` one or more times.
@@ -121,7 +121,7 @@ as admin.
 
 `volplugin` contacts the volmaster but listens on no network ports (it uses a
 unix socket as described above, to talk to docker). It by default connects to
-the volmaster at `127.0.0.1:8080` and must be supplied the `--master` switch to
+the volmaster at `127.0.0.1:9005` and must be supplied the `--master` switch to
 talk to a remote `volmaster`.
 
 `volcli` talks to both `volmaster` and `etcd` to communicate various state and
