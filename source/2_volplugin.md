@@ -11,7 +11,7 @@ before attempting these instructions.
 
 Clone and build the project: 
 
-* `git clone https://github.com/contiv/volplugin.git`
+* `git clone https://github.com/contiv/volplugin`
 * `make run-build`
   * This will install some utilities for building the software in your
     `$GOPATH`, as well as the `volmaster`, `volplugin` and `volcli`
@@ -19,7 +19,7 @@ Clone and build the project:
 
 #### Everywhere else (with a VM):
 
-* `git clone https://github.com/contiv/volplugin.git`
+* `git clone https://github.com/contiv/volplugin`
 * `make start`
 
 The build and each binary will be on the VM in `/opt/golang/bin`.
