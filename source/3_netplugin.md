@@ -23,7 +23,7 @@ This brings up a cluster of two VMs running docker and netplugin
 
 #### Step 1: Create a network
 ```
-netplugin-node1$ netctl net create contiv-net --subnet=20.1.1.0/24 --gateway=20.1.1.254 --pkt-tag=200
+netplugin-node1$ netctl net create contiv-net --subnet=20.1.1.0/24 --gateway=20.1.1.254 --pkt-tag=1001
 ```
 
 #### Step 2: Run containers on two hosts
