@@ -91,8 +91,8 @@ $ netctl policy create prod_web
 Following adds a default-deny rule to drop all incoming TCP connections and two specific rules to allow traffic on port 80 and 443
 ```
 $ netctl rule add prod_web 1 -direction=in -protocol=tcp -action=deny
-$ netctl rule add prod_web 2 -direction=in -protocol=tcp -port=80 -action=accept
-$ netctl rule add prod_web 3 -direction=in -protocol=tcp -port=443 -action=accept
+$ netctl rule add prod_web 2 -direction=in -protocol=tcp -port=80 -action=accept -priority=10
+$ netctl rule add prod_web 3 -direction=in -protocol=tcp -port=443 -action=accept -priority=10
 ```
 #### Step 3: Create an endpoint group
 Following command creates an endpoint group named `web` in network `contiv-net` and attaches `prod_web` policy to it
