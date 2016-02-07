@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>netplugin : Contiv Documentation</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="assets_/css/shCore.css">
+        <link rel="stylesheet" href="assets_/css/shThemeDefault.css">
+        <link rel="stylesheet" href="assets_/css/main.css">
+    </head>
+    <body data-root-path="">
+        <div id="wrapper">
+            <div id="content">
+<ul id="topnav">
+    <li><a href="index.html">Index</a></li>
+    <li><a href="#toc">TOC</a></li>
+</ul>
+<h1 id="netplugin">netplugin</h1>
+
+<h2 id="tableofcontentsahreftocnametocclassdeeplinka">Table of Contents <a href="#toc" name="toc" class="deep-link">#</a></h2>
+
+<ul>
+<li><a href="#About">About</a></li>
+
+<li><a href="#Getting started">Getting started</a></li>
+
+<li><a href="#Architecture">Architecture</a></li>
+
+<li><a href="#Using Policies">Using Policies</a></li>
+
+<li><a href="#Using Netplugin with Docker Swarm">Using Netplugin with Docker Swarm</a></li>
+
+<li><a href="#Service discovery">Service discovery</a></li>
+
+<li><a href="#Multi tenancy">Multi tenancy</a></li>
+
+<li><a href="#Using Netplugin on baremetal servers">Using Netplugin on baremetal servers</a></li>
+
+<li><a href="#Using Netplugin with Kubernetes">Using Netplugin with Kubernetes</a></li>
+
+<li><a href="#Working with Cisco ACI">Working with Cisco ACI</a></li>
+</ul>
+
+<h2 id="aboutahrefaboutidaboutclassdeeplinka">About <a href="#About" id="About" class="deep-link">#</a></h2>
+
+<p>Contiv netplugin is a generic networking plugin that is designed to provide multi host policy based networking for containerized applications.</p>
+
+<p>Netplugin is designed to be used with docker containers and with cluster schedulers like Swarm, Kubernetes and Mesos</p>
+
+<h2 id="gettingstartedahrefgettingstartedidgettingstartedclassdeeplinka">Getting started <a href="#Getting started" id="Getting started" class="deep-link">#</a></h2>
+
+<p>This section will walk you through how to try netplugin in a vagrant environment</p>
+
+<h3 id="prerequisits">Prerequisits</h3>
+
+<ul>
+<li>VirtualBox 5.0.2 or greater</li>
+
+<li>Vagrant 1.7.4</li>
+
+<li>Go 1.5.0</li>
+</ul>
+
+<h3 id="quickstartguide">Quick start guide</h3>
+
+<p>Clone the repo and bring up the VMs</p>
+
+<pre><code>$ git clone https://github.com/contiv/netplugin
+$ cd netplugin; make demo
+$ vagrant ssh netplugin-node1
+</code></pre>
+
+<p>This brings up a cluster of two VMs running docker and netplugin</p>
+
+<h4 id="step1createanetwork">Step 1: Create a network</h4>
+
+<pre><code>netplugin-node1$ netctl net create contiv-net --subnet=20.1.1.0/24 --gateway=20.1.1.254 --pkt-tag=1001
+</code></pre>
+
+<h4 id="step2runcontainersontwohosts">Step 2: Run containers on two hosts</h4>
+
+<p>On node1</p>
+
+<pre><code>netplugin-node1$ docker run -itd --name=web --net=contiv-net ubuntu /bin/bash
+</code></pre>
+
+<p>On node2</p>
+
+<pre><code>netplugin-node2$ docker run -itd --name=db --net=contiv-net ubuntu /bin/bash
+</code></pre>
+
+<p>On node1, login to the container and ping the container on node2</p>
+
+<pre><code>netplugin-node1$ docker exec -it web /bin/bash
+&lt; inside the container &gt;
+root@f90e7fd409c4:/# ping db
+PING db (20.1.1.3) 56(84) bytes of data.
+64 bytes from db (20.1.1.3): icmp_seq=1 ttl=64 time=0.658 ms
+64 bytes from db (20.1.1.3): icmp_seq=2 ttl=64 time=0.103 ms
+</code></pre>
+
+<h2 id="architectureahrefarchitectureidarchitectureclassdeeplinka">Architecture <a href="#Architecture" id="Architecture" class="deep-link">#</a></h2>
+
+<h4 id="glossary">Glossary</h4>
+
+<ul>
+<li><em>Netmaster</em>: Netmaster is the master daemon that is responsible for storing the Intent and distributing state to all nodes in the cluster.</li>
+
+<li><em>Netplugin</em>: Netplugin is a long running daemon on every node in the cluster. As a docker network plugin, it is responsible for setting up network and policy for each container.</li>
+
+<li><em>Netctl</em>: netctl is a command line tool to moidfy the intent.</li>
+</ul>
+
+<h4 id="netpluginarchitecture">Netplugin architecture</h4>
+
+<p><img src="netplugin-arch.jpg" alt="Architecture" /></p>
+
+<h3 id="contivobjectmodel">Contiv object model</h3>
+
+<p>Contiv object model provides a way for users to specify their Intent. Netmaster provides a REST api to view and modify contiv object model. Netctl commandline tool is a convinient utility to interact with the object model</p>
+
+<p><img src="contivModel.png" alt="Object model" /></p>
+
+<p>From networking perspective, objects of interest are tenant, network, endpoint-group, policy and rules.</p>
+
+<h4 id="tenant">Tenant</h4>
+
+<p>Tenant is the top level object that represents a tenant in a multi tenant environment. It could be an organization, a business unit or a project. Anything that requires complete isolation between its networks would be considered a tenant.</p>
+
+<h4 id="network">Network</h4>
+
+<p>Network represents an L3 network similar to a virtual private cloud or a VRF. Contiv networks are large L3 domains where packets are routed by IP address without any ARP broadcasting.</p>
+
+<h4 id="endpointgroup">Endpoint group</h4>
+
+<p>Endpoint groups are an arbitrary grouping of containers which belong to same policy domain. An endpoint group generally represents a microservice, a tier in an application stack or set of containers belonging to same framework or job.</p>
+
+<h4 id="policy">Policy</h4>
+
+<p>Policy represents a network security policy that can be applied to an endpoint group. Policy contains a list of rules.</p>
+
+<h4 id="rule">Rule</h4>
+
+<p>Rule is made up of match conditions(IP address, port, network, endpoint groups) and action(allow or deny). Rules are generally stateful. For example, "deny incoming tcp" denies all incoming TCP connections not packets. Incoming TCP packet for an already established connection will be allowed.</p>
+
+<h2 id="usingpoliciesahrefusingpoliciesidusingpoliciesclassdeeplinka">Using Policies <a href="#Using Policies" id="Using Policies" class="deep-link">#</a></h2>
+
+<p>Using policies with containers requires (1) creating a policy (2) adding rules to a policy (3) creating an endpoint group (4) attaching containers to the endpoint group. Lets walk thorough each of these steps.</p>
+
+<h4 id="step1createapolicy">Step1: Create a policy</h4>
+
+<p>Following creates a policy named <code>prod_web</code></p>
+
+<pre><code>$ netctl policy create prod_web
+</code></pre>
+
+<h4 id="step2addrulestothepolicy">Step 2: Add rules to the policy</h4>
+
+<p>Following adds a default-deny rule to drop all incoming TCP connections and two specific rules to allow traffic on port 80 and 443</p>
+
+<pre><code>$ netctl rule add prod_web 1 -direction=in -protocol=tcp -action=deny
+$ netctl rule add prod_web 2 -direction=in -protocol=tcp -port=80 -action=accept -priority=10
+$ netctl rule add prod_web 3 -direction=in -protocol=tcp -port=443 -action=accept -priority=10
+</code></pre>
+
+<h4 id="step3createanendpointgroup">Step 3: Create an endpoint group</h4>
+
+<p>Following command creates an endpoint group named <code>web</code> in network <code>contiv-net</code> and attaches <code>prod_web</code> policy to it</p>
+
+<pre><code>$ netctl group create contiv-net web -policy=prod_web
+</code></pre>
+
+<p><em>Note</em>: Each endpoint group will create a seperate docker network of the form <endpoint-group-name>.<network-name> You can attach containers to these endpoint groups using <code>--net</code> option in <code>docker run</code> command</p>
+
+<h4 id="step4runacontainerandattachittotheendpointgroup">Step 4: Run a container and attach it to the endpoint group</h4>
+
+<p>Following runs a docker container and attaches it to <code>web</code> endpoint group in <code>contiv-net</code> network</p>
+
+<pre><code>$ docker run -itd --net web.contiv-net ubuntu bash
+</code></pre>
+
+<h2 id="usingnetpluginwithdockerswarmahrefusingnetpluginwithdockerswarmidusingnetpluginwithdockerswarmclassdeeplinka">Using Netplugin with Docker Swarm <a href="#Using Netplugin with Docker Swarm" id="Using Netplugin with Docker Swarm" class="deep-link">#</a></h2>
+
+<p>Docker Swarm is a scheduler that schedules containers to multiple hosts. Netplugin is a docker network plugin that provides multi host networking.</p>
+
+<p>Docker + Swarm + Netplugin == Awesome!!</p>
+
+<h3 id="usingswarm">Using swarm</h3>
+
+<p>Netplugin vagrant setup comes pre-installed with docker swarm.
+Set the following environment variable to make docker client talk to Swarm</p>
+
+<pre><code>export DOCKER_HOST=tcp://192.168.2.10:2375
+</code></pre>
+
+<p>Now, you should be able to see the information about the swarm cluster</p>
+
+<pre><code>$ docker info
+Containers: 0
+Images: 5
+Engine Version:
+Role: primary
+Strategy: spread
+Filters: affinity, health, constraint, port, dependency
+Nodes: 2
+ netplugin-node1: 192.168.2.10:2385
+  └ Containers: 0
+  └ Reserved CPUs: 0 / 4
+  └ Reserved Memory: 0 B / 2.051 GiB
+  └ Labels: executiondriver=native-0.2, kernelversion=4.0.0-040000-generic, operatingsystem=Ubuntu 15.04, storagedriver=devicemapper
+ netplugin-node2: 192.168.2.11:2385
+  └ Containers: 0
+  └ Reserved CPUs: 0 / 4
+  └ Reserved Memory: 0 B / 2.051 GiB
+  └ Labels: executiondriver=native-0.2, kernelversion=4.0.0-040000-generic, operatingsystem=Ubuntu 15.04, storagedriver=devicemapper
+CPUs: 8
+Total Memory: 4.103 GiB
+Name: netplugin-node1
+No Proxy: 192.168.0.0/16,localhost,127.0.0.0/8
+</code></pre>
+
+<p>Next, you can see if there are any containers running in the cluster</p>
+
+<pre><code>$ docker ps
+CONTAINER ID        IMAGE                          COMMAND             CREATED             STATUS              PORTS               NAMES
+4dd09bc36875        ubuntu                         "bash"              52 minutes ago      Up 52 minutes                           netplugin-node1/reverent_allen
+18bdc2cde778        skynetservices/skydns:latest   "/skydns"           3 hours ago         Up 3 hours          53/udp, 53/tcp      netplugin-node1/defaultdns
+</code></pre>
+
+<p>You can run containers and attach them to contiv networks or endpoint groups just like before.</p>
+
+<pre><code>$ docker run -itd --net web.contiv-net ubuntu bash
+f291e269b45a5877f6fc952317feb329e12a99bda3a44a740b4c3307ef87954c
+</code></pre>
+
+<p>Here, <code>docker run</code> happens against the swarm cluster. Swarm schedules the container to one of the nodes and netplugin on that node sets up the networking and policies just like before.</p>
+
+<h2 id="servicediscoveryahrefservicediscoveryidservicediscoveryclassdeeplinka">Service discovery <a href="#Service discovery" id="Service discovery" class="deep-link">#</a></h2>
+
+<p>Contiv network provides built in service discovery for all containers in the network. Unlike traditional service discovery tools which require applications to query external KV stores for container IP/port information, contiv service discovery uses standard DNS protocol and requires no changes to the application.</p>
+
+<p>When a container is attached to an endpoint group, it automatically becomes reachable by DNS service name. In the example above, we ran a container and attached it to <code>web</code> endpoint group. This container becomes available by DNS name <code>web</code> for all other containers in the same network. It would be available as <code>web.contiv-net</code> for all containers in other networks within the same tenant. If there are multiple containers in same endpoint group, all of them would be available by same DNS service name. DNS queries will be load balanced across all containers in the group.</p>
+
+<h2 id="multitenancyahrefmultitenancyidmultitenancyclassdeeplinka">Multi tenancy <a href="#Multi tenancy" id="Multi tenancy" class="deep-link">#</a></h2>
+
+<h2 id="usingnetpluginonbaremetalserversahrefusingnetpluginonbaremetalserversidusingnetpluginonbaremetalserversclassdeeplinka">Using Netplugin on baremetal servers <a href="#Using Netplugin on baremetal servers" id="Using Netplugin on baremetal servers" class="deep-link">#</a></h2>
+
+<h2 id="usingnetpluginwithkubernetesahrefusingnetpluginwithkubernetesidusingnetpluginwithkubernetesclassdeeplinka">Using Netplugin with Kubernetes <a href="#Using Netplugin with Kubernetes" id="Using Netplugin with Kubernetes" class="deep-link">#</a></h2>
+
+<h2 id="workingwithciscoaciahrefworkingwithciscoaciidworkingwithciscoaciclassdeeplinka">Working with Cisco ACI <a href="#Working with Cisco ACI" id="Working with Cisco ACI" class="deep-link">#</a></h2>
+                <hr />
+                <small>Documentation generated by <a href="https://github.com/millermedeiros/mdoc">mdoc</a>.</small>
+            </div>
+        </div>
+        <script src="assets_/js/lib/jquery.js"></script>
+        <script src="assets_/js/lib/syntax-highlighter/shCore.js"></script>
+        <script src="assets_/js/lib/syntax-highlighter/shAutoloader.js"></script>
+        <script src="assets_/js/main.js"></script>
+    </body>
+</html>

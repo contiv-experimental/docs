@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>volplugin : Contiv Documentation</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="assets_/css/shCore.css">
+        <link rel="stylesheet" href="assets_/css/shThemeDefault.css">
+        <link rel="stylesheet" href="assets_/css/main.css">
+    </head>
+    <body data-root-path="">
+        <div id="wrapper">
+            <div id="content">
+<ul id="topnav">
+    <li><a href="index.html">Index</a></li>
+    <li><a href="#toc">TOC</a></li>
+</ul>
+<h1 id="volplugin">volplugin</h1>
+
+<h2 id="tableofcontentsahreftocnametocclassdeeplinka">Table of Contents <a href="#toc" name="toc" class="deep-link">#</a></h2>
+
+<ul>
+<li><a href="#Getting Started">Getting Started</a></li>
+
+<li><a href="#Architecture">Architecture</a></li>
+
+<li><a href="#Configuration">Configuration</a></li>
+
+<li><a href="#volcli Reference">volcli Reference</a></li>
+</ul>
+
+<h2 id="gettingstartedahrefgettingstartedidgettingstartedclassdeeplinka">Getting Started <a href="#Getting Started" id="Getting Started" class="deep-link">#</a></h2>
+
+<h3 id="cloneandbuildtheproject">Clone and build the project</h3>
+
+<p>Please see the <a href="https://github.com/contiv/volplugin/blob/master/README.md#prerequisites">prerequisites in the README</a>
+before attempting these instructions.</p>
+
+<h3 id="onlinuxwithoutavm">On Linux (without a VM):</h3>
+
+<p>Clone and build the project: </p>
+
+<ul>
+<li><code>git clone https://github.com/contiv/volplugin</code></li>
+
+<li><code>make run-build</code>
+
+
+<ul>
+<li>This will install some utilities for building the software in your
+<code>$GOPATH</code>, as well as the <code>volmaster</code>, <code>volplugin</code> and <code>volcli</code>
+utilities.</li></ul>
+</li>
+</ul>
+
+<h4 id="everywhereelsewithavm">Everywhere else (with a VM):</h4>
+
+<ul>
+<li><code>git clone https://github.com/contiv/volplugin</code></li>
+
+<li><code>make start</code></li>
+</ul>
+
+<p>The build and each binary will be on the VM in <code>/opt/golang/bin</code>.</p>
+
+<h3 id="installdependencies">Install Dependencies</h3>
+
+<ul>
+<li><a href="https://github.com/coreos/etcd/releases/tag/v2.2.0">etcd release notes and install instructions</a>
+
+
+<ul>
+<li>We currently support versions 2.0 and up.</li></ul>
+</li>
+
+<li><a href="http://docs.ceph.com/docs/master/start/">Ceph</a>
+
+
+<ul>
+<li>If you have not installed Ceph before, a quick installation guide <a href="http://docs.ceph.com/docs/master/start/">is here</a></li>
+
+<li>Ceph can be a complicated beast to install. If this is your first time
+using the project, please be aware there are pre-baked VMs that will work
+for you on any unix operating system. <a href="https://github.com/contiv/volplugin/blob/master/README.md#running-the-processes">See the README for more information</a>.</li></ul>
+</li>
+</ul>
+
+<h3 id="configureservices">Configure Services</h3>
+
+<p>The quickest way to do this with the VMs is from the Makefile: <code>make run</code>. You
+may need to <code>make build</code> first.</p>
+
+<p>Ensure ceph is fully operational, and that the <code>rbd</code> tool works as root.</p>
+
+<ol>
+<li>Start etcd: <code>etcd &amp;&gt;/dev/null &amp;</code></li>
+
+<li>Upload a tenant policy with <code>volcli tenant upload tenant1</code>. It accepts the
+policy from stdin.
+
+
+<ul>
+<li>You can find some examples of policy in
+<a href="https://github.com/contiv/volplugin/tree/master/systemtests/testdata">systemtests/testdata</a>.</li>
+
+<li>If you just want a quick start without configuring it yourself: 
+
+
+<ul>
+<li><code>cat systemtests/testdata/intent1.json | volcli tenant upload tenant1</code></li></ul>
+</li></ul>
+</li>
+
+<li>Start volmaster in debug mode (as root): <code>volmaster --debug &amp;</code>
+
+
+<ul>
+<li>volmaster has a debug mode as well, but it's really noisy, so avoid using
+it with background processes. volplugin currently connects to volmaster
+using port 9005, but this will be variable in the future.</li></ul>
+</li>
+
+<li>Start volsupervisor (as root): <code>volsupervisor &amp;</code>
+
+
+<ul>
+<li>Note that debug mode for this tool is very noisy and is not recommended.</li></ul>
+</li>
+
+<li>Start volplugin in debug mode (as root): <code>volplugin --debug &amp;</code>
+
+
+<ul>
+<li>If you run volplugin on multiple hosts, you can use the <code>--master</code> flag to
+provide a ip:port pair to connect to over http. By default it connects to
+<code>127.0.0.1:9005</code>.</li></ul>
+</li>
+</ol>
+
+<h3 id="runstuff">Run Stuff!</h3>
+
+<p>Let's start a container with a volume.</p>
+
+<ol>
+<li>Create a volume that refers to the volplugin driver:
+<code>docker volume create -d volplugin tenant1/test</code>
+
+
+<ul>
+<li><code>test</code> is the name of your volume, and it lives under tenant <code>tenant1</code>,
+which you uploaded with <code>volcli tenant upload</code></li></ul>
+</li>
+
+<li>Run a container that uses it: <code>docker run -it -v tenant1/test:/mnt ubuntu bash</code></li>
+
+<li>Run <code>mount | grep /mnt</code> in the container, you should see the <code>/dev/rbd#</code>
+attached to that directory.
+
+
+<ul>
+<li>Once you have a multi-host setup, anytime the volume is not mounted, it
+can be mounted on any host that has a connected rbd client available, and
+volplugin running.</li></ul>
+</li>
+</ol>
+
+<h2 id="architectureahrefarchitectureidarchitectureclassdeeplinka">Architecture <a href="#Architecture" id="Architecture" class="deep-link">#</a></h2>
+
+<p>"volplugin", despite the name, is actually a suite of components:</p>
+
+<p><code>volmaster</code> is the master process. It exists to coordinate the volplugins in a
+way that safely manages container volumes. It talks to <code>etcd</code> to keep its
+state.</p>
+
+<p><code>volplugin</code> is the slave process. It exists to bridge the state management
+between <code>volmaster</code> and <code>docker</code>, and to mount volumes on specific hosts.</p>
+
+<p><code>volcli</code> is a utility for managing <code>volmaster</code>'s data. It makes both REST calls
+into the volmaster and additionally can write directly to etcd.</p>
+
+<h3 id="organizationalarchitecture">Organizational Architecture</h3>
+
+<p><code>volmaster</code> is completely stateless, and can be run multi-host for redundancy.
+<code>volmaster</code> needs both root permissions, and capability to manipulate RBD
+images with the <code>rbd</code> tool.</p>
+
+<p><code>volsupervisor</code> handles scheduled and supervised tasks such as snapshotting. It
+may only be deployed on one host at a time.</p>
+
+<p><code>volplugin</code> needs to run on every host that will be running containers. Upon
+start, it will create a unix socket in the appropriate plugin path so that
+docker recognizes it. This creates a driver named <code>volplugin</code>.</p>
+
+<p><code>volcli</code> is a management tool and can live anywhere that has access to the etcd
+cluster and volmaster.</p>
+
+<h3 id="securityarchitecture">Security Architecture</h3>
+
+<p>There is none currently. This is still an alpha, security will be a beta
+target.</p>
+
+<h3 id="networkarchitecture">Network Architecture</h3>
+
+<p><code>volmaster</code>, by default, listens on <code>0.0.0.0:9005</code>. It provides a REST
+interface to each of its operations that are used both by <code>volplugin</code> and
+<code>volcli</code>. It connects to etcd at <code>127.0.0.1:2379</code>, which you can change by
+supplying <code>--etcd</code> one or more times.</p>
+
+<p><code>volsupervisor</code> needs root, connections to etcd, and access to ceph <code>rbd</code> tools
+as admin.</p>
+
+<p><code>volplugin</code> contacts the volmaster but listens on no network ports (it uses a
+unix socket as described above, to talk to docker). It by default connects to
+the volmaster at <code>127.0.0.1:9005</code> and must be supplied the <code>--master</code> switch to
+talk to a remote <code>volmaster</code>.</p>
+
+<p><code>volcli</code> talks to both <code>volmaster</code> and <code>etcd</code> to communicate various state and
+operations to the system.</p>
+
+<h2 id="configurationahrefconfigurationidconfigurationclassdeeplinka">Configuration <a href="#Configuration" id="Configuration" class="deep-link">#</a></h2>
+
+<p>This section describes various ways to manipulate volplugin through
+configuration and options.</p>
+
+<h3 id="volumeformatting">Volume Formatting</h3>
+
+<p>Because of limitations in the docker volume implementation, we use a <em>pattern</em>
+to describe volumes to docker. This pattern is <code>tenant-name/volume-name</code>, and
+is supplied to <code>docker volume create --name</code> and transfers to <code>docker run -v</code>.</p>
+
+<p>For example, a typical use of volplugin might work like this presuming we have
+a tenant uploaded named <code>tenant1</code>:</p>
+
+<pre><code>$ docker volume create -d volplugin --name tenant1/foo
+$ docker run -it -v tenant1/foo:/mnt ubuntu bash
+</code></pre>
+
+<p>This pattern creates a volume called <code>foo</code> in <code>tenant1</code>'s default ceph pool. If
+you wish to change the pool (or other options), see "Driver Options" below.</p>
+
+<h3 id="jsontenantconfiguration">JSON Tenant Configuration</h3>
+
+<p>Tenant configuration uses JSON to configure the default volume parameters such
+as what pool to use. It is uploaded to etcd by the <code>volcli</code> tool.</p>
+
+<p>Here is an example:</p>
+
+<pre class="brush:javascript">
+{
+  "default-options": {
+    "size": "10MB",
+    "snapshots": true,
+    "snapshot": {
+      "frequency": "30m",
+      "keep": 20
+    },
+    "filesystem": "btrfs",
+    "ephemeral": false,
+    "rate-limit": {
+      "write-iops": 1000,
+      "read-iops": 1000,
+      "write-bps": 100000000,
+      "read-bps": 100000000
+    }
+  },
+    "filesystems": {
+        "btrfs": "mkfs.btrfs %",
+        "ext4": "mkfs.ext4 -m0 %"
+    }
+}
+</pre>
+
+<p>Let's go through what these parameters mean.</p>
+
+<ul>
+<li><code>default-options</code>: the options that will be persisted unless overridden (see
+"Driver Options" below)
+
+
+<ul>
+<li><code>pool</code>: this option is <strong>required</strong>. It specifies the ceph pool volumes
+will be added to by default.</li>
+
+<li><code>size</code>: the size of the volume. Required is a unit of measurement like <code>GB</code>, <code>KB</code>, <code>MB</code> etc.</li>
+
+<li><code>snapshots</code>: use the snapshots facility.</li>
+
+<li><code>snapshot</code>: sub-level configuration for snapshots</li>
+
+<li><code>frequency</code>: the frequency between snapshots in Go's <a href="https://golang.org/pkg/time/#ParseDuration">duration notation</a></li>
+
+<li><code>keep</code>: how many snapshots to keep</li>
+
+<li><code>filesystem</code>: which filesystem to use. See below for how this works.</li>
+
+<li><code>ephemeral</code>: when <code>true</code>, deletes volumes upon <code>docker volume rm</code>.</li>
+
+<li><code>rate-limit</code>: sub-level configuration for rate limiting.</li>
+
+<li><code>write-iops</code>: Write IOPS</li>
+
+<li><code>read-iops</code>: Read IOPS</li>
+
+<li><code>read-bps</code>: Read b/s</li>
+
+<li><code>write-bps</code>: Write b/s</li></ul>
+</li>
+
+<li><code>filesystems</code>: Provides a map of filesystem -> command for volumes to use in
+the <code>filesystem</code> option.
+
+
+<ul>
+<li>Commands are run when the filesystem is specified and the volume has not
+been created already.</li>
+
+<li>Each command must contain a <code>%</code>, which will be replaced with the block
+device to be used. Supply <code>%%</code> to use a literal <code>%</code>.</li>
+
+<li>Commands run in a POSIX (not bash, zsh) shell.</li>
+
+<li>If the <code>filesystems</code> block is omitted, <code>mkfs.ext4 -m0 %</code> will be applied to
+all volumes within this tenant.</li></ul>
+</li>
+</ul>
+
+<p>You supply them with <code>volcli tenant upload &lt;tenant name&gt;</code>. The JSON itself is
+provided via standard input, so for example if your file is <code>tenant2.json</code>:</p>
+
+<pre><code>$ volcli tenant upload myTenant &lt; tenant2.json
+</code></pre>
+
+<h3 id="driveroptions">Driver Options</h3>
+
+<p>Driver options are passed at <code>docker volume create</code> time with the <code>--opt</code> flag.
+They are <code>key=value</code> pairs and are specified as such, f.e.:</p>
+
+<pre><code>docker volume create -d volplugin \
+  --name tenant2/image \
+  --opt size=1000
+</code></pre>
+
+<p>The options are as follows:</p>
+
+<ul>
+<li><code>pool</code>: the pool to use for this volume.</li>
+
+<li><code>size</code>: the size (in MB) for the volume.</li>
+
+<li><code>snapshots</code>: take snapshots or not. Affects future options with <code>snapshot</code> in the key name.
+
+
+<ul>
+<li>the value must satisfy <a href="https://golang.org/pkg/strconv/#ParseBool">this specification</a></li></ul>
+</li>
+
+<li><code>snapshots.frequency</code>: as above in the previous chapter, the frequency which we
+take snapshots.</li>
+
+<li><code>snapshots.keep</code>: as above in the previous chapter, the number of snapshots to keep.</li>
+
+<li><code>filesystem</code>: the named filesystem to create. See the JSON Configuration
+section for more information on this.</li>
+
+<li><code>ephemeral</code>: delete this volume after <code>docker volume rm</code> occurs.</li>
+
+<li><code>rate-limit.write.iops</code>: Write IOPS</li>
+
+<li><code>rate-limit.read.iops</code>: Read IOPS</li>
+
+<li><code>rate-limit.read.bps</code>: Read b/s</li>
+
+<li><code>rate-limit.write.bps</code>: Write b/s</li>
+</ul>
+
+<h2 id="volclireferenceahrefvolclireferenceidvolclireferenceclassdeeplinka">volcli Reference <a href="#volcli Reference" id="volcli Reference" class="deep-link">#</a></h2>
+
+<p><code>volcli</code> controls the <code>volmaster</code>, which in turn is referenced by the
+<code>volplugin</code> for local management of storage. Think of volcli as a tap into the
+control plane.</p>
+
+<h3 id="toplevelcommands">Top-Level Commands</h3>
+
+<p>These four commands present CRUD options on their respective sub-sections:</p>
+
+<ul>
+<li><code>volcli tenant</code> manipulates tenant configuration</li>
+
+<li><code>volcli volume</code> manipulates volumes. </li>
+
+<li><code>volcli mount</code> manipulates mounts.</li>
+
+<li><code>volcli help</code> prints the help.
+
+
+<ul>
+<li>Note that for each subcommand, <code>volcli help [subcommand]</code> will print the
+help for that command. For multi-level commands, <code>volcli [subcommand] help
+[subcommand]</code> will work. Appending <code>--help</code> to any command will print the
+help as well.</li></ul>
+</li>
+</ul>
+
+<h3 id="tenantcommands">Tenant Commands</h3>
+
+<p>Typing <code>volcli tenant</code> without arguments will print help for these commands.</p>
+
+<ul>
+<li><code>volcli tenant upload</code> takes a tenant name, and JSON configuration from standard input.</li>
+
+<li><code>volcli tenant delete</code> removes a tenant. Its volumes and mounts will not be removed.</li>
+
+<li><code>volcli tenant get</code> displays the JSON configuration for a tenant.</li>
+
+<li><code>volcli tenant list</code> lists the tenants etcd knows about.</li>
+</ul>
+
+<h3 id="volumecommands">Volume Commands</h3>
+
+<p>Typing <code>volcli volume</code> without arguments will print help for these commands.</p>
+
+<ul>
+<li><code>volcli volume create</code> will forcefully create a volume just like it was created with
+<code>docker volume create</code>. Requires a tenant, and volume name.</li>
+
+<li><code>volcli volume get</code> will retrieve the volume configuration for a given tenant/volume combination.</li>
+
+<li><code>volcli volume list</code> will list all the volumes for a provided tenant.</li>
+
+<li><code>volcli volume list-all</code> will list all volumes, across tenants.</li>
+
+<li><code>volcli volume remove</code> will remove a volume given a tenant/volume
+combination, deleting the underlying data.  This operation may fail if the
+device is mounted, or expected to be mounted.</li>
+
+<li><code>volcli volume force-remove</code>, given a tenant/volume combination, will remove
+the data from etcd but not perform any other operations. Use this option with
+caution.</li>
+</ul>
+
+<h3 id="mountcommands">Mount Commands</h3>
+
+<p>Typing <code>volcli mount</code> without arguments will print help for these commands.</p>
+
+<p><strong>Note:</strong> <code>volcli mount</code> cannot control mounts -- this is managed by
+<code>volplugin</code> which lives on each host. Eventually there will be support for
+pushing operations down to the volplugin, but not yet.</p>
+
+<ul>
+<li><code>volcli mount list</code> lists all known mounts in etcd.</li>
+
+<li><code>volcli mount get</code> obtains specific information about a mount from etcd.</li>
+
+<li><code>volcli mount force-remove</code> removes the contents from etcd, but does not
+attempt to perform any unmounting. This is useful for removing mounts that
+for some reason (e.g., host failure, which is not currently satsified by
+volplugin)</li>
+</ul>
+                <hr />
+                <small>Documentation generated by <a href="https://github.com/millermedeiros/mdoc">mdoc</a>.</small>
+            </div>
+        </div>
+        <script src="assets_/js/lib/jquery.js"></script>
+        <script src="assets_/js/lib/syntax-highlighter/shCore.js"></script>
+        <script src="assets_/js/lib/syntax-highlighter/shAutoloader.js"></script>
+        <script src="assets_/js/main.js"></script>
+    </body>
+</html>
