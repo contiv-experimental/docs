@@ -6,6 +6,7 @@ build-docs: install-docs
 	mkdir -p dist
 	node docs.js
 	for i in "$(IMG_FILES)"; do (cp $$i dist || exit 1); done
+	cp CNAME dist
 
 reflex:
 	@echo 'To use this task, `go get github.com/cespare/reflex`'
