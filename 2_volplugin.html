@@ -22,6 +22,10 @@
 <ul>
 <li><a href="#Getting Started">Getting Started</a></li>
 
+<li><a href="#Do it yourself">Do it yourself</a></li>
+
+<li><a href="#Configure Services">Configure Services</a></li>
+
 <li><a href="#Architecture">Architecture</a></li>
 
 <li><a href="#Configuration">Configuration</a></li>
@@ -30,6 +34,9 @@
 </ul>
 
 <h2 id="gettingstartedahrefgettingstartedidgettingstartedclassdeeplinka">Getting Started <a href="#Getting Started" id="Getting Started" class="deep-link">#</a></h2>
+
+<p>This will assist you getting started with our 3 VM test environment. After
+that, you will want to go to the "Configure Services" section shortly below.</p>
 
 <h3 id="cloneandbuildtheproject">Clone and build the project</h3>
 
@@ -63,7 +70,12 @@ utilities.</li></ul>
 
 <p>The build and each binary will be on the VM in <code>/opt/golang/bin</code>.</p>
 
+<h2 id="doityourselfahrefdoityourselfiddoityourselfclassdeeplinka">Do it yourself <a href="#Do it yourself" id="Do it yourself" class="deep-link">#</a></h2>
+
 <h3 id="installdependencies">Install Dependencies</h3>
+
+<p>You may wish to use one of our <a href="https://github.com/contiv/volplugin/releases">nightly releases</a> for these steps. It
+will be much simpler than building the applications.</p>
 
 <ul>
 <li><a href="https://github.com/coreos/etcd/releases/tag/v2.2.0">etcd release notes and install instructions</a>
@@ -77,38 +89,13 @@ utilities.</li></ul>
 
 
 <ul>
-<li>If you have not installed Ceph before, a quick installation guide <a href="http://docs.ceph.com/docs/master/start/">is here</a></li>
+<li>If you have not installed Ceph before, a quick installation guide <a href="http://docs.ceph.com/docs/master/start/">is here</a>.</li>
+
+<li>You can find ansible to configure Ceph <a href="https://github.com/ceph/ceph-ansible">here</a>.</li>
 
 <li>Ceph can be a complicated beast to install. If this is your first time
 using the project, please be aware there are pre-baked VMs that will work
 for you on any unix operating system. <a href="https://github.com/contiv/volplugin/blob/master/README.md#running-the-processes">See the README for more information</a>.</li></ul>
-</li>
-</ul>
-
-<h3 id="configureservices">Configure Services</h3>
-
-<p>The quickest way to do this with the VMs is from the Makefile: <code>make run</code>. You
-may need to <code>make build</code> first.</p>
-
-<p>Ensure ceph is fully operational, and that the <code>rbd</code> tool works as root.</p>
-
-<ol>
-<li>Start etcd: <code>etcd &amp;&gt;/dev/null &amp;</code></li>
-
-<li>Upload a tenant policy with <code>volcli tenant upload tenant1</code>. It accepts the
-policy from stdin.
-
-
-<ul>
-<li>You can find some examples of policy in
-<a href="https://github.com/contiv/volplugin/tree/master/systemtests/testdata">systemtests/testdata</a>.</li>
-
-<li>If you just want a quick start without configuring it yourself: 
-
-
-<ul>
-<li><code>cat systemtests/testdata/intent1.json | volcli tenant upload tenant1</code></li></ul>
-</li></ul>
 </li>
 
 <li>Start volmaster in debug mode (as root): <code>volmaster --debug &amp;</code>
@@ -135,24 +122,54 @@ using port 9005, but this will be variable in the future.</li></ul>
 provide a ip:port pair to connect to over http. By default it connects to
 <code>127.0.0.1:9005</code>.</li></ul>
 </li>
+</ul>
+
+<h2 id="configureservicesahrefconfigureservicesidconfigureservicesclassdeeplinka">Configure Services <a href="#Configure Services" id="Configure Services" class="deep-link">#</a></h2>
+
+<p>Ensure ceph is fully operational, and that the <code>rbd</code> tool works as root.</p>
+
+<ol>
+<li>Upload a tenant policy with <code>volcli tenant upload tenant1</code>. It accepts the
+policy from stdin, e.g.: <code>volcli tenant upload tenant1 &lt; mypolicy.json</code>
+
+
+<ul>
+<li>You can find some examples of policy in
+<a href="https://github.com/contiv/volplugin/tree/master/systemtests/testdata">systemtests/testdata</a>.</li></ul>
+</li>
 </ol>
 
 <h3 id="runstuff">Run Stuff!</h3>
 
 <p>Let's start a container with a volume.</p>
 
-<ol>
-<li>Create a volume that refers to the volplugin driver:
-<code>docker volume create -d volplugin tenant1/test</code>
+<ul>
+<li>Create a volume that refers to the volplugin driver: </li>
+</ul>
 
+<pre><code>docker volume create -d volplugin tenant1/test
+</code></pre>
+
+<ul>
+<li><p>Notes:</p>
 
 <ul>
 <li><code>test</code> is the name of your volume, and it lives under tenant <code>tenant1</code>,
-which you uploaded with <code>volcli tenant upload</code></li></ul>
-</li>
+which you uploaded with <code>volcli tenant upload</code>.</li>
 
-<li>Run a container that uses it: <code>docker run -it -v tenant1/test:/mnt ubuntu bash</code></li>
+<li>This will inherit the properties of your tenant policy, so you will get a
+volume with the appropriate size, iops, etc.</li>
 
+<li>Note there are numerous options (see below) you can use to declare overrides
+for most parameters in the policy configuration.</li></ul></li>
+
+<li><p>Run a container that uses it: </p></li>
+</ul>
+
+<pre><code>docker run -it -v tenant1/test:/mnt ubuntu bash
+</code></pre>
+
+<ul>
 <li>Run <code>mount | grep /mnt</code> in the container, you should see the <code>/dev/rbd#</code>
 attached to that directory.
 
@@ -162,7 +179,7 @@ attached to that directory.
 can be mounted on any host that has a connected rbd client available, and
 volplugin running.</li></ul>
 </li>
-</ol>
+</ul>
 
 <h2 id="architectureahrefarchitectureidarchitectureclassdeeplinka">Architecture <a href="#Architecture" id="Architecture" class="deep-link">#</a></h2>
 
