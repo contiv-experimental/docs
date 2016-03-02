@@ -42,6 +42,7 @@ will be much simpler than building the applications.
   * Ceph can be a complicated beast to install. If this is your first time
     using the project, please be aware there are pre-baked VMs that will work
     for you on any unix operating system. [See the README for more information](https://github.com/contiv/volplugin/blob/master/README.md#running-the-processes).
+* Upload a global configuration. You can find an example one [here]
 * Start volmaster in debug mode (as root): `volmaster --debug &`
   * volmaster has a debug mode as well, but it's really noisy, so avoid using
     it with background processes. volplugin currently connects to volmaster
@@ -165,6 +166,28 @@ $ docker run -it -v tenant1/foo:/mnt ubuntu bash
 This pattern creates a volume called `foo` in `tenant1`'s default ceph pool. If
 you wish to change the pool (or other options), see "Driver Options" below.
 
+### JSON Global Configuration
+
+Global configuration modifies the whole system through the volmaster, volplugin
+and volsupervisor systems. You can manipulate them with the `volcli global`
+command set.
+
+A configuration looks like this:
+
+```javascript
+{
+  "TTL": 60,
+  "Debug": true,
+  "Timeout": 5
+}
+```
+
+Options:
+
+* TTL: time (in seconds) for a mount record to timeout in the event a volplugin dies
+* Debug: boolean value indicating whether or not to enable debug traps/logging
+* Timeout: time (in minutes) for a command to be terminated if it exceeds this value
+
 ### JSON Tenant Configuration
 
 Tenant configuration uses JSON to configure the default volume parameters such
@@ -268,9 +291,10 @@ control plane.
 
 ### Top-Level Commands
 
-These four commands present CRUD options on their respective sub-sections:
+These commands present CRUD options on their respective sub-sections:
 
-* `volcli tenant` manipulates tenant configuration
+* `volcli global` manipulates global configuration.
+* `volcli tenant` manipulates tenant configuration.
 * `volcli volume` manipulates volumes. 
 * `volcli mount` manipulates mounts.
 * `volcli help` prints the help.
@@ -278,6 +302,11 @@ These four commands present CRUD options on their respective sub-sections:
     help for that command. For multi-level commands, `volcli [subcommand] help
     [subcommand]` will work. Appending `--help` to any command will print the
     help as well.
+
+### Global Commands
+
+* `volcli global upload` takes JSON global configuration from the standard input.
+* `volcli global get` retrieves the JSON global configuration.
 
 ### Tenant Commands
 
