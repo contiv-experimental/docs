@@ -58,8 +58,8 @@ will be much simpler than building the applications.
 
 Ensure ceph is fully operational, and that the `rbd` tool works as root.
 
-1. Upload a tenant policy with `volcli tenant upload tenant1`. It accepts the
-   policy from stdin, e.g.: `volcli tenant upload tenant1 < mypolicy.json`
+1. Upload a policy with `volcli policy upload policy1`. It accepts the
+   policy from stdin, e.g.: `volcli policy upload policy1 < mypolicy.json`
     * You can find some examples of policy in
     [systemtests/testdata](https://github.com/contiv/volplugin/tree/master/systemtests/testdata).
 
@@ -69,20 +69,20 @@ Let's start a container with a volume.
 
 * Create a volume that refers to the volplugin driver: 
 ```
-docker volume create -d volplugin tenant1/test
+docker volume create -d volplugin policy1/test
 ```
 
 * Notes:
-  * `test` is the name of your volume, and it lives under tenant `tenant1`,
-    which you uploaded with `volcli tenant upload`.
-  * This will inherit the properties of your tenant policy, so you will get a
+  * `test` is the name of your volume, and it lives under policy `policy1`,
+    which you uploaded with `volcli policy upload`.
+  * This will inherit the properties of your policy, so you will get a
     volume with the appropriate size, iops, etc.
   * Note there are numerous options (see below) you can use to declare overrides
     for most parameters in the policy configuration.
 
 * Run a container that uses it: 
 ```
-docker run -it -v tenant1/test:/mnt ubuntu bash
+docker run -it -v policy1/test:/mnt ubuntu bash
 ```
 
 * Run `mount | grep /mnt` in the container, you should see the `/dev/rbd#`
@@ -152,18 +152,18 @@ configuration and options.
 ### Volume Formatting
 
 Because of limitations in the docker volume implementation, we use a *pattern*
-to describe volumes to docker. This pattern is `tenant-name/volume-name`, and
+to describe volumes to docker. This pattern is `policy-name/volume-name`, and
 is supplied to `docker volume create --name` and transfers to `docker run -v`.
 
 For example, a typical use of volplugin might work like this presuming we have
-a tenant uploaded named `tenant1`:
+a policy uploaded named `policy1`:
 
 ```
-$ docker volume create -d volplugin --name tenant1/foo
-$ docker run -it -v tenant1/foo:/mnt ubuntu bash
+$ docker volume create -d volplugin --name policy1/foo
+$ docker run -it -v policy1/foo:/mnt ubuntu bash
 ```
 
-This pattern creates a volume called `foo` in `tenant1`'s default ceph pool. If
+This pattern creates a volume called `foo` in `policy1`'s default ceph pool. If
 you wish to change the pool (or other options), see "Driver Options" below.
 
 ### JSON Global Configuration
@@ -246,13 +246,13 @@ Let's go through what these parameters mean.
 		device to be used. Supply `%%` to use a literal `%`.
 	* Commands run in a POSIX (not bash, zsh) shell.
 	* If the `filesystems` block is omitted, `mkfs.ext4 -m0 %` will be applied to
-		all volumes within this tenant.
+		all volumes within this policy.
 
-You supply them with `volcli tenant upload <tenant name>`. The JSON itself is
-provided via standard input, so for example if your file is `tenant2.json`:
+You supply them with `volcli policy upload <policy name>`. The JSON itself is
+provided via standard input, so for example if your file is `policy2.json`:
 
 ```
-$ volcli tenant upload myTenant < tenant2.json
+$ volcli policy upload myTenant < policy2.json
 ```
 
 ### Driver Options
@@ -262,7 +262,7 @@ They are `key=value` pairs and are specified as such, f.e.:
 
 ```
 docker volume create -d volplugin \
-  --name tenant2/image \
+  --name policy2/image \
   --opt size=1000
 ```
 
@@ -294,7 +294,7 @@ control plane.
 These commands present CRUD options on their respective sub-sections:
 
 * `volcli global` manipulates global configuration.
-* `volcli tenant` manipulates tenant configuration.
+* `volcli policy` manipulates policy configuration.
 * `volcli volume` manipulates volumes. 
 * `volcli mount` manipulates mounts.
 * `volcli help` prints the help.
@@ -310,26 +310,26 @@ These commands present CRUD options on their respective sub-sections:
 
 ### Tenant Commands
 
-Typing `volcli tenant` without arguments will print help for these commands.
+Typing `volcli policy` without arguments will print help for these commands.
 
-* `volcli tenant upload` takes a tenant name, and JSON configuration from standard input.
-* `volcli tenant delete` removes a tenant. Its volumes and mounts will not be removed.
-* `volcli tenant get` displays the JSON configuration for a tenant.
-* `volcli tenant list` lists the tenants etcd knows about.
+* `volcli policy upload` takes a policy name, and JSON configuration from standard input.
+* `volcli policy delete` removes a policy. Its volumes and mounts will not be removed.
+* `volcli policy get` displays the JSON configuration for a policy.
+* `volcli policy list` lists the policies etcd knows about.
 
 ### Volume Commands
 
 Typing `volcli volume` without arguments will print help for these commands.
 
 * `volcli volume create` will forcefully create a volume just like it was created with
-  `docker volume create`. Requires a tenant, and volume name.
-* `volcli volume get` will retrieve the volume configuration for a given tenant/volume combination.
-* `volcli volume list` will list all the volumes for a provided tenant.
-* `volcli volume list-all` will list all volumes, across tenants.
-* `volcli volume remove` will remove a volume given a tenant/volume
+  `docker volume create`. Requires a policy, and volume name.
+* `volcli volume get` will retrieve the volume configuration for a given policy/volume combination.
+* `volcli volume list` will list all the volumes for a provided policy.
+* `volcli volume list-all` will list all volumes, across policies.
+* `volcli volume remove` will remove a volume given a policy/volume
   combination, deleting the underlying data.  This operation may fail if the
   device is mounted, or expected to be mounted.
-* `volcli volume force-remove`, given a tenant/volume combination, will remove
+* `volcli volume force-remove`, given a policy/volume combination, will remove
   the data from etcd but not perform any other operations. Use this option with
   caution.
 
