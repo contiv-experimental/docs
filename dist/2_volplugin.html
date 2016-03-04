@@ -131,8 +131,8 @@ provide a ip:port pair to connect to over http. By default it connects to
 <p>Ensure ceph is fully operational, and that the <code>rbd</code> tool works as root.</p>
 
 <ol>
-<li>Upload a tenant policy with <code>volcli tenant upload tenant1</code>. It accepts the
-policy from stdin, e.g.: <code>volcli tenant upload tenant1 &lt; mypolicy.json</code>
+<li>Upload a policy with <code>volcli policy upload policy1</code>. It accepts the
+policy from stdin, e.g.: <code>volcli policy upload policy1 &lt; mypolicy.json</code>
 
 
 <ul>
@@ -149,17 +149,17 @@ policy from stdin, e.g.: <code>volcli tenant upload tenant1 &lt; mypolicy.json</
 <li>Create a volume that refers to the volplugin driver: </li>
 </ul>
 
-<pre><code>docker volume create -d volplugin tenant1/test
+<pre><code>docker volume create -d volplugin policy1/test
 </code></pre>
 
 <ul>
 <li><p>Notes:</p>
 
 <ul>
-<li><code>test</code> is the name of your volume, and it lives under tenant <code>tenant1</code>,
-which you uploaded with <code>volcli tenant upload</code>.</li>
+<li><code>test</code> is the name of your volume, and it lives under policy <code>policy1</code>,
+which you uploaded with <code>volcli policy upload</code>.</li>
 
-<li>This will inherit the properties of your tenant policy, so you will get a
+<li>This will inherit the properties of your policy, so you will get a
 volume with the appropriate size, iops, etc.</li>
 
 <li>Note there are numerous options (see below) you can use to declare overrides
@@ -168,7 +168,7 @@ for most parameters in the policy configuration.</li></ul></li>
 <li><p>Run a container that uses it: </p></li>
 </ul>
 
-<pre><code>docker run -it -v tenant1/test:/mnt ubuntu bash
+<pre><code>docker run -it -v policy1/test:/mnt ubuntu bash
 </code></pre>
 
 <ul>
@@ -244,17 +244,17 @@ configuration and options.</p>
 <h3 id="volumeformatting">Volume Formatting</h3>
 
 <p>Because of limitations in the docker volume implementation, we use a <em>pattern</em>
-to describe volumes to docker. This pattern is <code>tenant-name/volume-name</code>, and
+to describe volumes to docker. This pattern is <code>policy-name/volume-name</code>, and
 is supplied to <code>docker volume create --name</code> and transfers to <code>docker run -v</code>.</p>
 
 <p>For example, a typical use of volplugin might work like this presuming we have
-a tenant uploaded named <code>tenant1</code>:</p>
+a policy uploaded named <code>policy1</code>:</p>
 
-<pre><code>$ docker volume create -d volplugin --name tenant1/foo
-$ docker run -it -v tenant1/foo:/mnt ubuntu bash
+<pre><code>$ docker volume create -d volplugin --name policy1/foo
+$ docker run -it -v policy1/foo:/mnt ubuntu bash
 </code></pre>
 
-<p>This pattern creates a volume called <code>foo</code> in <code>tenant1</code>'s default ceph pool. If
+<p>This pattern creates a volume called <code>foo</code> in <code>policy1</code>'s default ceph pool. If
 you wish to change the pool (or other options), see "Driver Options" below.</p>
 
 <h3 id="jsonglobalconfiguration">JSON Global Configuration</h3>
@@ -365,14 +365,14 @@ device to be used. Supply <code>%%</code> to use a literal <code>%</code>.</li>
 <li>Commands run in a POSIX (not bash, zsh) shell.</li>
 
 <li>If the <code>filesystems</code> block is omitted, <code>mkfs.ext4 -m0 %</code> will be applied to
-all volumes within this tenant.</li></ul>
+all volumes within this policy.</li></ul>
 </li>
 </ul>
 
-<p>You supply them with <code>volcli tenant upload &lt;tenant name&gt;</code>. The JSON itself is
-provided via standard input, so for example if your file is <code>tenant2.json</code>:</p>
+<p>You supply them with <code>volcli policy upload &lt;policy name&gt;</code>. The JSON itself is
+provided via standard input, so for example if your file is <code>policy2.json</code>:</p>
 
-<pre><code>$ volcli tenant upload myTenant &lt; tenant2.json
+<pre><code>$ volcli policy upload myTenant &lt; policy2.json
 </code></pre>
 
 <h3 id="driveroptions">Driver Options</h3>
@@ -381,7 +381,7 @@ provided via standard input, so for example if your file is <code>tenant2.json</
 They are <code>key=value</code> pairs and are specified as such, f.e.:</p>
 
 <pre><code>docker volume create -d volplugin \
-  --name tenant2/image \
+  --name policy2/image \
   --opt size=1000
 </code></pre>
 
@@ -431,7 +431,7 @@ control plane.</p>
 <ul>
 <li><code>volcli global</code> manipulates global configuration.</li>
 
-<li><code>volcli tenant</code> manipulates tenant configuration.</li>
+<li><code>volcli policy</code> manipulates policy configuration.</li>
 
 <li><code>volcli volume</code> manipulates volumes. </li>
 
@@ -458,16 +458,16 @@ help as well.</li></ul>
 
 <h3 id="tenantcommands">Tenant Commands</h3>
 
-<p>Typing <code>volcli tenant</code> without arguments will print help for these commands.</p>
+<p>Typing <code>volcli policy</code> without arguments will print help for these commands.</p>
 
 <ul>
-<li><code>volcli tenant upload</code> takes a tenant name, and JSON configuration from standard input.</li>
+<li><code>volcli policy upload</code> takes a policy name, and JSON configuration from standard input.</li>
 
-<li><code>volcli tenant delete</code> removes a tenant. Its volumes and mounts will not be removed.</li>
+<li><code>volcli policy delete</code> removes a policy. Its volumes and mounts will not be removed.</li>
 
-<li><code>volcli tenant get</code> displays the JSON configuration for a tenant.</li>
+<li><code>volcli policy get</code> displays the JSON configuration for a policy.</li>
 
-<li><code>volcli tenant list</code> lists the tenants etcd knows about.</li>
+<li><code>volcli policy list</code> lists the policies etcd knows about.</li>
 </ul>
 
 <h3 id="volumecommands">Volume Commands</h3>
@@ -476,19 +476,19 @@ help as well.</li></ul>
 
 <ul>
 <li><code>volcli volume create</code> will forcefully create a volume just like it was created with
-<code>docker volume create</code>. Requires a tenant, and volume name.</li>
+<code>docker volume create</code>. Requires a policy, and volume name.</li>
 
-<li><code>volcli volume get</code> will retrieve the volume configuration for a given tenant/volume combination.</li>
+<li><code>volcli volume get</code> will retrieve the volume configuration for a given policy/volume combination.</li>
 
-<li><code>volcli volume list</code> will list all the volumes for a provided tenant.</li>
+<li><code>volcli volume list</code> will list all the volumes for a provided policy.</li>
 
-<li><code>volcli volume list-all</code> will list all volumes, across tenants.</li>
+<li><code>volcli volume list-all</code> will list all volumes, across policies.</li>
 
-<li><code>volcli volume remove</code> will remove a volume given a tenant/volume
+<li><code>volcli volume remove</code> will remove a volume given a policy/volume
 combination, deleting the underlying data.  This operation may fail if the
 device is mounted, or expected to be mounted.</li>
 
-<li><code>volcli volume force-remove</code>, given a tenant/volume combination, will remove
+<li><code>volcli volume force-remove</code>, given a policy/volume combination, will remove
 the data from etcd but not perform any other operations. Use this option with
 caution.</li>
 </ul>
