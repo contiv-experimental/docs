@@ -1,95 +1,142 @@
 # volplugin
+Contiv Volume plugin [volplugin](https://github.com/contiv/volplugin "Title") is a Ceph volume driver, and policy system that works well within a Docker ecosystem. It can automatically move your storage with your containers, rather than pinning containers to specific hosts to take advantage of their storage.
 
-## Getting Started
+## Getting started
 
-This will assist you getting started with our 3 VM test environment. After
-that, you will want to go to the "Configure Services" section shortly below.
+Getting started describes setting up a test environment with three VMs. Once the test environment is setup see the [**Configure Services**](#Configure Services).
+
+#### Prerequisites
+
+Please read and follow the instructions in the prerequisites section of the volplugin [README](https://github.com/contiv/volplugin/blob/master/README.md#prerequisites) before completing the following:
 
 ### Clone and build the project
 
-Please see the [prerequisites in the README](https://github.com/contiv/volplugin/blob/master/README.md#prerequisites)
-before attempting these instructions.
+### On Linux (without a VM)
 
-### On Linux (without a VM):
+Clone the project:
 
-Clone and build the project: 
+```
+git clone https://github.com/contiv/volplugin
+```
 
-* `git clone https://github.com/contiv/volplugin`
-* `make run-build`
-  * This will install some utilities for building the software in your
-    `$GOPATH`, as well as the `volmaster`, `volplugin` and `volcli`
-    utilities.
+Build the project:
 
-#### Everywhere else (with a VM):
+```
+make run-build
+```
 
-* `git clone https://github.com/contiv/volplugin`
-* `make start`
 
-The build and each binary will be on the VM in `/opt/golang/bin`.
+The command `make run-build` installs utilities for building the software in the `$GOPATH`, as well as the `volmaster`, `volplugin` and `volcli` utilities.
+
+### Everywhere else (with a VM):
+
+Clone the project:
+
+```
+git clone https://github.com/contiv/volplugin
+```
+
+
+Build the project:
+
+```
+make start
+```
+
+
+The build and binaries will be on the VM in the following directory `/opt/golang/bin`.
 
 ## Do it yourself
 
-### Install Dependencies
+### Installing Dependencies
 
-You may wish to use one of our [nightly releases](https://github.com/contiv/volplugin/releases) for these steps. It
-will be much simpler than building the applications.
+Use the Contiv [nightly releases](https://github.com/contiv/volplugin/releases) when following these steps:
 
-* [etcd release notes and install instructions](https://github.com/coreos/etcd/releases/tag/v2.2.0)
-  * We currently support versions 2.0 and up.
-* [Ceph](http://docs.ceph.com/docs/master/start/)
-  * If you have not installed Ceph before, a quick installation guide [is here](http://docs.ceph.com/docs/master/start/).
-  * You can find ansible to configure Ceph [here](https://github.com/ceph/ceph-ansible).
-  * Ceph can be a complicated beast to install. If this is your first time
-    using the project, please be aware there are pre-baked VMs that will work
-    for you on any unix operating system. [See the README for more information](https://github.com/contiv/volplugin/blob/master/README.md#running-the-processes).
-* Upload a global configuration. You can find an example one [here](https://github.com/contiv/volplugin/blob/master/systemtests/testdata/global1.json)
-* Start volmaster in debug mode (as root): `volmaster --debug &`
-  * volmaster has a debug mode as well, but it's really noisy, so avoid using
-    it with background processes. volplugin currently connects to volmaster
-    using port 9005, but this will be variable in the future.
-* Start volsupervisor (as root): `volsupervisor &`
-  * Note that debug mode for this tool is very noisy and is not recommended.
-* Start volplugin in debug mode (as root): `volplugin --debug &`
-  * If you run volplugin on multiple hosts, you can use the `--master` flag to
-    provide a ip:port pair to connect to over http. By default it connects to
-    `127.0.0.1:9005`.
+**Note:** Using the nightly builds is simpler than building the applications.
 
-## Configure Services
+Install the dependencies in the following order:
 
-Ensure ceph is fully operational, and that the `rbd` tool works as root.
+1. Follow the [Getting Started](https://github.com/coreos/etcd/releases/tag/v2.2.0) to install [Etcd] (https://coreos.com/etcd/docs/latest/getting-started-with-etcd.html).
+  * Currently versions 2.0 and later are supported.
 
-1. Upload a policy with `volcli policy upload policy1`. It accepts the
-   policy from stdin, e.g.: `volcli policy upload policy1 < mypolicy.json`
-    * You can find some examples of policy in
-    [systemtests/testdata](https://github.com/contiv/volplugin/tree/master/systemtests/testdata).
+2. Follow the [Ceph Installation Guide](http://docs.ceph.com/docs/master/install/) to install [Ceph] (http://ceph.com).
+3. Configure Ceph with [Ansible](https://github.com/ceph/ceph-ansible).
 
-### Run Stuff!
+  **Note**: See the [README] (https://github.com/contiv/volplugin/blob/master/README.md#running-the-processes) for pre-configured VMs that work on any UNIX operating system to simplify Ceph installation.
 
-Let's start a container with a volume.
+4. Upload a global configuration. You can find an example one [here](https://github.com/contiv/volplugin/blob/master/systemtests/testdata/global1.json)
 
-* Create a volume that refers to the volplugin driver: 
+5. Start volmaster in debug mode (as root):
+
+```
+volmaster --debug &
+```
+
+**Note**: volmaster debug mode is very noisy and is not recommended. Therefore, avoid using it with background processes. volplugin currently connects to volmaster
+using port 9005, however in the future it is variable.
+
+6. Start volsupervisor (as root):
+
+```
+volsupervisor &
+```
+
+
+**Note**: volsupervisor debug mode is very noisy and is not recommended.
+
+7.  Start volplugin in debug mode (as root):
+
+```
+volplugin --debug &
+```
+
+If running volplugin on multiple hosts, use the `--master` flag to
+provide a ip:port pair to connect to over http. By default it connects to
+`127.0.0.1:9005`.
+
+## <a name="Configure Services"></a>Configure Services
+
+Ensure Ceph is fully operational, and that the `rbd` tool works as root.
+
+Upload a policy:
+
+```
+volcli policy upload policy1
+```
+
+
+**Note**: It accepts the policy from stdin, e.g.: `volcli policy upload policy1 < mypolicy.json`
+Examples of a policy are in [systemtests/testdata](https://github.com/contiv/volplugin/tree/master/systemtests/testdata).
+
+### Creating a container with a volume
+
+
+Create a volume that refers to the volplugin driver:
+
 ```
 docker volume create -d volplugin policy1/test
 ```
 
-* Notes:
-  * `test` is the name of your volume, and it lives under policy `policy1`,
-    which you uploaded with `volcli policy upload`.
-  * This will inherit the properties of your policy, so you will get a
-    volume with the appropriate size, iops, etc.
-  * Note there are numerous options (see below) you can use to declare overrides
-    for most parameters in the policy configuration.
+**Notes**:
 
-* Run a container that uses it: 
+* `test` is the name of the volume, and is located under policy `policy1`,
+ which is uploaded with `volcli policy upload.`
+* The volume will inherit the properties of the policy. Therefore, the
+volume will be of appropriate size, iops, etc.
+* There are numerous options (see below) to declare overrides of most parameters in the policy configuration.
+* Run a container that uses the policy:
+
 ```
 docker run -it -v policy1/test:/mnt ubuntu bash
 ```
+* Run `mount | grep /mnt` in the container.
 
-* Run `mount | grep /mnt` in the container, you should see the `/dev/rbd#`
-   attached to that directory.
-   * Once you have a multi-host setup, anytime the volume is not mounted, it
-     can be mounted on any host that has a connected rbd client available, and
-     volplugin running.
+
+**Note**: `/dev/rbd#`should be attached to that directory.
+
+* Once a multi-host system is setup, anytime the volume is not mounted, it
+can be mounted on any host that has a connected rbd client available, and
+volplugin running.
 
 ## Architecture
 
@@ -213,17 +260,17 @@ Here is an example:
       "read-bps": 100000000
     }
   },
-	"filesystems": {
-		"btrfs": "mkfs.btrfs %",
-		"ext4": "mkfs.ext4 -m0 %"
-	}
+  "filesystems": {
+    "btrfs": "mkfs.btrfs %",
+    "ext4": "mkfs.ext4 -m0 %"
+  }
 }
 ```
 
 Let's go through what these parameters mean.
 
 * `default-options`: the options that will be persisted unless overridden (see
-	"Driver Options" below)
+  "Driver Options" below)
   * `pool`: this option is **required**. It specifies the ceph pool volumes
     will be added to by default.
   * `size`: the size of the volume. Required is a unit of measurement like `GB`, `KB`, `MB` etc.
@@ -231,7 +278,7 @@ Let's go through what these parameters mean.
   * `snapshot`: sub-level configuration for snapshots
     * `frequency`: the frequency between snapshots in Go's [duration notation](https://golang.org/pkg/time/#ParseDuration)
     * `keep`: how many snapshots to keep
-	* `filesystem`: which filesystem to use. See below for how this works.
+  * `filesystem`: which filesystem to use. See below for how this works.
   * `ephemeral`: when `true`, deletes volumes upon `docker volume rm`.
   * `rate-limit`: sub-level configuration for rate limiting.
     * `write-iops`: Write IOPS
@@ -239,14 +286,14 @@ Let's go through what these parameters mean.
     * `read-bps`: Read b/s
     * `write-bps`: Write b/s
 * `filesystems`: Provides a map of filesystem -> command for volumes to use in
-	the `filesystem` option.
-	* Commands are run when the filesystem is specified and the volume has not
-		been created already.
-	* Each command must contain a `%`, which will be replaced with the block
-		device to be used. Supply `%%` to use a literal `%`.
-	* Commands run in a POSIX (not bash, zsh) shell.
-	* If the `filesystems` block is omitted, `mkfs.ext4 -m0 %` will be applied to
-		all volumes within this policy.
+  the `filesystem` option.
+  * Commands are run when the filesystem is specified and the volume has not
+    been created already.
+  * Each command must contain a `%`, which will be replaced with the block
+    device to be used. Supply `%%` to use a literal `%`.
+  * Commands run in a POSIX (not bash, zsh) shell.
+  * If the `filesystems` block is omitted, `mkfs.ext4 -m0 %` will be applied to
+    all volumes within this policy.
 
 You supply them with `volcli policy upload <policy name>`. The JSON itself is
 provided via standard input, so for example if your file is `policy2.json`:
@@ -295,7 +342,7 @@ These commands present CRUD options on their respective sub-sections:
 
 * `volcli global` manipulates global configuration.
 * `volcli policy` manipulates policy configuration.
-* `volcli volume` manipulates volumes. 
+* `volcli volume` manipulates volumes.
 * `volcli mount` manipulates mounts.
 * `volcli help` prints the help.
   * Note that for each subcommand, `volcli help [subcommand]` will print the
