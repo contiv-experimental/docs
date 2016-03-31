@@ -42,7 +42,7 @@ will be much simpler than building the applications.
   * Ceph can be a complicated beast to install. If this is your first time
     using the project, please be aware there are pre-baked VMs that will work
     for you on any unix operating system. [See the README for more information](https://github.com/contiv/volplugin/blob/master/README.md#running-the-processes).
-* Upload a global configuration. You can find an example one [here]
+* Upload a global configuration. You can find an example one [here](https://github.com/contiv/volplugin/blob/master/systemtests/testdata/global1.json)
 * Start volmaster in debug mode (as root): `volmaster --debug &`
   * volmaster has a debug mode as well, but it's really noisy, so avoid using
     it with background processes. volplugin currently connects to volmaster
