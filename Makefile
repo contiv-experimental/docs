@@ -27,4 +27,4 @@ stop-doc-server:
 	pkill -f docs-server
 
 publish-docs: build-docs
-	cd dist && s3cmd sync --delete-removed --recursive * s3://contiv-docs
+	git subtree push --prefix dist origin gh-pages
