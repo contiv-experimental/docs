@@ -257,7 +257,7 @@ you wish to change the pool (or other options), see "Driver Options" below.</p>
 and volsupervisor systems. You can manipulate them with the <code>volcli global</code>
 command set.</p>
 
-<p>A configuration looks like this:</p>
+<p>A global configuration looks like this:</p>
 
 <pre class="brush:javascript">
 {
@@ -286,15 +286,20 @@ as what pool to use. It is uploaded to etcd by the <code>volcli</code> tool.</p>
 
 <pre class="brush:javascript">
 {
-  "default-options": {
+  "backend": "ceph",
+  "driver": {
+    "pool": "rbd"
+  },
+  "create": {
     "size": "10MB",
+    "filesystem": "btrfs"
+  },
+  "runtime": {
     "snapshots": true,
     "snapshot": {
       "frequency": "30m",
       "keep": 20
     },
-    "filesystem": "btrfs",
-    "ephemeral": false,
     "rate-limit": {
       "write-iops": 1000,
       "read-iops": 1000,
@@ -303,8 +308,9 @@ as what pool to use. It is uploaded to etcd by the <code>volcli</code> tool.</p>
     }
   },
   "filesystems": {
+    "ext4": "mkfs.ext4 -m0 %",
     "btrfs": "mkfs.btrfs %",
-    "ext4": "mkfs.ext4 -m0 %"
+    "falsefs": "/bin/false"
   }
 }
 </pre>
@@ -312,54 +318,63 @@ as what pool to use. It is uploaded to etcd by the <code>volcli</code> tool.</p>
 <p>Let's go through what these parameters mean.</p>
 
 <ul>
-<li><code>default-options</code>: the options that will be persisted unless overridden (see
-"Driver Options" below)
-
-
-<ul>
-<li><code>pool</code>: this option is <strong>required</strong>. It specifies the ceph pool volumes
-will be added to by default.</li>
-
-<li><code>size</code>: the size of the volume. Required is a unit of measurement like <code>GB</code>, <code>KB</code>, <code>MB</code> etc.</li>
-
-<li><code>snapshots</code>: use the snapshots facility.</li>
-
-<li><code>snapshot</code>: sub-level configuration for snapshots</li>
-
-<li><code>frequency</code>: the frequency between snapshots in Go's <a href="https://golang.org/pkg/time/#ParseDuration">duration notation</a></li>
-
-<li><code>keep</code>: how many snapshots to keep</li>
-
-<li><code>filesystem</code>: which filesystem to use. See below for how this works.</li>
-
-<li><code>ephemeral</code>: when <code>true</code>, deletes volumes upon <code>docker volume rm</code>.</li>
-
-<li><code>rate-limit</code>: sub-level configuration for rate limiting.</li>
-
-<li><code>write-iops</code>: Write IOPS</li>
-
-<li><code>read-iops</code>: Read IOPS</li>
-
-<li><code>read-bps</code>: Read b/s</li>
-
-<li><code>write-bps</code>: Write b/s</li></ul>
-</li>
-
-<li><code>filesystems</code>: Provides a map of filesystem -> command for volumes to use in
-the <code>filesystem</code> option.
+<li><code>filesystems</code>: a policy-level map of filesystem name -> mkfs command.
 
 
 <ul>
 <li>Commands are run when the filesystem is specified and the volume has not
 been created already.</li>
 
-<li>Each command must contain a <code>%</code>, which will be replaced with the block
-device to be used. Supply <code>%%</code> to use a literal <code>%</code>.</li>
-
 <li>Commands run in a POSIX (not bash, zsh) shell.</li>
 
 <li>If the <code>filesystems</code> block is omitted, <code>mkfs.ext4 -m0 %</code> will be applied to
-all volumes within this policy.</li></ul>
+all volumes within this policy.</li>
+
+<li>Referred to by the volume create-time parameter <code>filesystem</code>. Note that you
+can use a <code>%</code> to be replaced with the device to format.</li></ul>
+</li>
+
+<li><code>backend</code>: the storage backend to use -- this will determine what features
+are supported and how the devices will be mounted.</li>
+
+<li><code>driver</code>: driver-specific options.
+
+
+<ul>
+<li><code>pool</code>: the ceph pool to use</li></ul>
+</li>
+
+<li><code>create</code>: create-time options.
+
+
+<ul>
+<li><code>size</code>: the size of the volume</li>
+
+<li><code>filesystem</code>: the filesystem to use, see <code>filesystems</code> above.</li></ul>
+</li>
+
+<li><code>runtime</code>: runtime options. These options can be changed and the changes will
+be applied to mounted volumes almost immediately.
+
+
+<ul>
+<li><code>snapshots</code>: use the snapshots feature</li>
+
+<li><code>snapshot</code>: map of the following parameters:</li>
+
+<li><code>frequency</code>: the amount of time between taking snapshots.</li>
+
+<li><code>keep</code>: the number of snapshots to keep. the oldest ones will be deleted first.</li>
+
+<li><code>rate-limit</code>: map of the following rate-limiting parameters:</li>
+
+<li><code>write-iops</code>: Write I/O weight </li>
+
+<li><code>read-iops</code>: Read I/O weight</li>
+
+<li><code>write-bps</code>: Write bytes/s</li>
+
+<li><code>read-bps</code>: Read bytes/s</li></ul>
 </li>
 </ul>
 
@@ -382,8 +397,6 @@ They are <code>key=value</code> pairs and are specified as such, f.e.:</p>
 <p>The options are as follows:</p>
 
 <ul>
-<li><code>pool</code>: the pool to use for this volume.</li>
-
 <li><code>size</code>: the size (in MB) for the volume.</li>
 
 <li><code>snapshots</code>: take snapshots or not. Affects future options with <code>snapshot</code> in the key name.
@@ -400,8 +413,6 @@ take snapshots.</li>
 
 <li><code>filesystem</code>: the named filesystem to create. See the JSON Configuration
 section for more information on this.</li>
-
-<li><code>ephemeral</code>: delete this volume after <code>docker volume rm</code> occurs.</li>
 
 <li><code>rate-limit.write.iops</code>: Write IOPS</li>
 
@@ -485,6 +496,10 @@ device is mounted, or expected to be mounted.</li>
 <li><code>volcli volume force-remove</code>, given a policy/volume combination, will remove
 the data from etcd but not perform any other operations. Use this option with
 caution.</li>
+
+<li><code>volcli volume runtime get</code> will retrieve the runtime policy for a given volume</li>
+
+<li><code>volcli volume runtime upload</code> will upload (via stdin) the runtime policy for a given volume</li>
 </ul>
 
 <h3 id="mountcommands">Mount Commands</h3>
@@ -504,6 +519,22 @@ pushing operations down to the volplugin, but not yet.</p>
 attempt to perform any unmounting. This is useful for removing mounts that
 for some reason (e.g., host failure, which is not currently satsified by
 volplugin)</li>
+</ul>
+
+<h3 id="usecommands">Use Commands</h3>
+
+<p>Use commands control the locking system and also provide information about what
+is being used by what. Use these commands with caution as they can affect the
+stability of the cluster if used improperly.</p>
+
+<ul>
+<li><code>volcli use list</code> will list all uses (mounts, snapshots) in effect.</li>
+
+<li><code>volcli use get</code> will get information on a specific use lock.</li>
+
+<li><code>volcli use force-remove</code> will force a lock open for a given volume.</li>
+
+<li><code>volcli use exec</code> will wait for a lock to free, then execute hte command.</li>
 </ul>
                 <hr />
                 <small>Documentation generated by <a href="https://github.com/millermedeiros/mdoc">mdoc</a>.</small>
