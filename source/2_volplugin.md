@@ -219,7 +219,7 @@ Global configuration modifies the whole system through the volmaster, volplugin
 and volsupervisor systems. You can manipulate them with the `volcli global`
 command set.
 
-A configuration looks like this:
+A global configuration looks like this:
 
 ```javascript
 {
@@ -244,15 +244,20 @@ Here is an example:
 
 ```javascript
 {
-  "default-options": {
+  "backend": "ceph",
+  "driver": {
+    "pool": "rbd"
+  },
+  "create": {
     "size": "10MB",
+    "filesystem": "btrfs"
+  },
+  "runtime": {
     "snapshots": true,
     "snapshot": {
       "frequency": "30m",
       "keep": 20
     },
-    "filesystem": "btrfs",
-    "ephemeral": false,
     "rate-limit": {
       "write-iops": 1000,
       "read-iops": 1000,
@@ -261,39 +266,41 @@ Here is an example:
     }
   },
   "filesystems": {
+    "ext4": "mkfs.ext4 -m0 %",
     "btrfs": "mkfs.btrfs %",
-    "ext4": "mkfs.ext4 -m0 %"
+    "falsefs": "/bin/false"
   }
 }
 ```
 
 Let's go through what these parameters mean.
 
-* `default-options`: the options that will be persisted unless overridden (see
-  "Driver Options" below)
-  * `pool`: this option is **required**. It specifies the ceph pool volumes
-    will be added to by default.
-  * `size`: the size of the volume. Required is a unit of measurement like `GB`, `KB`, `MB` etc.
-  * `snapshots`: use the snapshots facility.
-  * `snapshot`: sub-level configuration for snapshots
-    * `frequency`: the frequency between snapshots in Go's [duration notation](https://golang.org/pkg/time/#ParseDuration)
-    * `keep`: how many snapshots to keep
-  * `filesystem`: which filesystem to use. See below for how this works.
-  * `ephemeral`: when `true`, deletes volumes upon `docker volume rm`.
-  * `rate-limit`: sub-level configuration for rate limiting.
-    * `write-iops`: Write IOPS
-    * `read-iops`: Read IOPS
-    * `read-bps`: Read b/s
-    * `write-bps`: Write b/s
-* `filesystems`: Provides a map of filesystem -> command for volumes to use in
-  the `filesystem` option.
+* `filesystems`: a policy-level map of filesystem name -> mkfs command.
   * Commands are run when the filesystem is specified and the volume has not
     been created already.
-  * Each command must contain a `%`, which will be replaced with the block
-    device to be used. Supply `%%` to use a literal `%`.
   * Commands run in a POSIX (not bash, zsh) shell.
   * If the `filesystems` block is omitted, `mkfs.ext4 -m0 %` will be applied to
     all volumes within this policy.
+	* Referred to by the volume create-time parameter `filesystem`. Note that you
+	  can use a `%` to be replaced with the device to format.
+* `backend`: the storage backend to use -- this will determine what features
+	are supported and how the devices will be mounted.
+* `driver`: driver-specific options.
+	* `pool`: the ceph pool to use
+* `create`: create-time options.
+	* `size`: the size of the volume
+  * `filesystem`: the filesystem to use, see `filesystems` above.
+* `runtime`: runtime options. These options can be changed and the changes will
+  be applied to mounted volumes almost immediately.
+  * `snapshots`: use the snapshots feature
+  * `snapshot`: map of the following parameters:
+    * `frequency`: the amount of time between taking snapshots.
+    * `keep`: the number of snapshots to keep. the oldest ones will be deleted first.
+  * `rate-limit`: map of the following rate-limiting parameters:
+    * `write-iops`: Write I/O weight 
+    * `read-iops`: Read I/O weight
+    * `write-bps`: Write bytes/s
+    * `read-bps`: Read bytes/s
 
 You supply them with `volcli policy upload <policy name>`. The JSON itself is
 provided via standard input, so for example if your file is `policy2.json`:
@@ -315,7 +322,6 @@ docker volume create -d volplugin \
 
 The options are as follows:
 
-* `pool`: the pool to use for this volume.
 * `size`: the size (in MB) for the volume.
 * `snapshots`: take snapshots or not. Affects future options with `snapshot` in the key name.
   * the value must satisfy [this specification](https://golang.org/pkg/strconv/#ParseBool)
@@ -324,7 +330,6 @@ The options are as follows:
 * `snapshots.keep`: as above in the previous chapter, the number of snapshots to keep.
 * `filesystem`: the named filesystem to create. See the JSON Configuration
   section for more information on this.
-* `ephemeral`: delete this volume after `docker volume rm` occurs.
 * `rate-limit.write.iops`: Write IOPS
 * `rate-limit.read.iops`: Read IOPS
 * `rate-limit.read.bps`: Read b/s
@@ -379,6 +384,8 @@ Typing `volcli volume` without arguments will print help for these commands.
 * `volcli volume force-remove`, given a policy/volume combination, will remove
   the data from etcd but not perform any other operations. Use this option with
   caution.
+* `volcli volume runtime get` will retrieve the runtime policy for a given volume
+* `volcli volume runtime upload` will upload (via stdin) the runtime policy for a given volume
 
 ### Mount Commands
 
@@ -394,3 +401,14 @@ pushing operations down to the volplugin, but not yet.
   attempt to perform any unmounting. This is useful for removing mounts that
   for some reason (e.g., host failure, which is not currently satsified by
   volplugin)
+
+### Use Commands
+
+Use commands control the locking system and also provide information about what
+is being used by what. Use these commands with caution as they can affect the
+stability of the cluster if used improperly.
+
+* `volcli use list` will list all uses (mounts, snapshots) in effect.
+* `volcli use get` will get information on a specific use lock.
+* `volcli use force-remove` will force a lock open for a given volume.
+* `volcli use exec` will wait for a lock to free, then execute hte command.
