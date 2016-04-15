@@ -69,7 +69,7 @@ Install the dependencies in the following order:
 5. Start volmaster in debug mode (as root):
 
 ```
-volmaster --debug &
+volmaster &
 ```
 
 **Note**: volmaster debug mode is very noisy and is not recommended. Therefore, avoid using it with background processes. volplugin currently connects to volmaster
@@ -87,7 +87,7 @@ volsupervisor &
 7.  Start volplugin in debug mode (as root):
 
 ```
-volplugin --debug &
+volplugin &
 ```
 
 If running volplugin on multiple hosts, use the `--master` flag to
