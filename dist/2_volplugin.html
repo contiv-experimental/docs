@@ -17,7 +17,10 @@
 </ul>
 <h1 id="volplugin">volplugin</h1>
 
-<p>Contiv Volume plugin <a href="https://github.com/contiv/volplugin" title="Title">volplugin</a> is a Ceph volume driver, and policy system that works well within a Docker ecosystem. It can automatically move your storage with your containers, rather than pinning containers to specific hosts to take advantage of their storage.</p>
+<p>Contiv Volume plugin <a href="https://github.com/contiv/volplugin" title="Title">volplugin</a>
+is a Ceph volume driver, and policy system that works well within a Docker
+ecosystem. It can automatically move your storage with your containers, rather
+than pinning containers to specific hosts to take advantage of their storage.</p>
 
 <h2 id="tableofcontentsahreftocnametocclassdeeplinka">Table of Contents <a href="#toc" name="toc" class="deep-link">#</a></h2>
 
@@ -26,7 +29,7 @@
 
 <li><a href="#Do it yourself">Do it yourself</a></li>
 
-<li><a href="#<a name="Configure Services"></a>Configure Services"><a name="Configure Services"></a>Configure Services</a></li>
+<li><a href="#Configure Services">Configure Services</a></li>
 
 <li><a href="#Architecture">Architecture</a></li>
 
@@ -37,11 +40,15 @@
 
 <h2 id="gettingstartedahrefgettingstartedidgettingstartedclassdeeplinka">Getting started <a href="#Getting started" id="Getting started" class="deep-link">#</a></h2>
 
-<p>Getting started describes setting up a test environment with three VMs. Once the test environment is setup see the <a href="#Configure Services"><strong>Configure Services</strong></a>.</p>
+<p>Getting started describes setting up a test environment with three VMs. Once
+the test environment is setup see the <a href="#Configure Services"><strong>Configure Services</strong></a>.</p>
 
 <h4 id="prerequisites">Prerequisites</h4>
 
-<p>Please read and follow the instructions in the prerequisites section of the volplugin <a href="https://github.com/contiv/volplugin/blob/master/README.md#prerequisites">README</a> before completing the following:</p>
+<p>Please read and follow the instructions in the prerequisites section of the
+volplugin
+<a href="https://github.com/contiv/volplugin/blob/master/README.md#prerequisites">README</a>
+before completing the following:</p>
 
 <h3 id="cloneandbuildtheproject">Clone and build the project</h3>
 
@@ -57,7 +64,8 @@
 <pre><code>make run-build
 </code></pre>
 
-<p>The command <code>make run-build</code> installs utilities for building the software in the <code>$GOPATH</code>, as well as the <code>volmaster</code>, <code>volplugin</code> and <code>volcli</code> utilities.</p>
+<p>The command <code>make run-build</code> installs utilities for building the software in
+the <code>$GOPATH</code>, as well as the <code>volmaster</code>, <code>volplugin</code> and <code>volcli</code> utilities.</p>
 
 <h3 id="everywhereelsewithavm">Everywhere else (with a VM):</h3>
 
@@ -77,14 +85,15 @@
 
 <h3 id="installingdependencies">Installing Dependencies</h3>
 
-<p>Use the Contiv <a href="https://github.com/contiv/volplugin/releases">nightly releases</a> when following these steps:</p>
+<p>Use the Contiv <a href="https://github.com/contiv/volplugin/releases">nightly releases</a>
+when following these steps:</p>
 
 <p><strong>Note:</strong> Using the nightly builds is simpler than building the applications.</p>
 
 <p>Install the dependencies in the following order:</p>
 
 <ol>
-<li>Follow the <a href="https://github.com/coreos/etcd/releases/tag/v2.2.0">Getting Started</a> to install [Etcd] (https://coreos.com/etcd/docs/latest/getting-started-with-etcd.html).</li>
+<li>Follow the <a href="https://github.com/coreos/etcd/releases/tag/v2.2.0">Getting Started</a> to install <a href="https://coreos.com/etcd/docs/latest/getting-started-with-etcd.html">Etcd</a>.</li>
 </ol>
 
 <ul>
@@ -92,11 +101,13 @@
 </ul>
 
 <ol>
-<li><p>Follow the <a href="http://docs.ceph.com/docs/master/install/">Ceph Installation Guide</a> to install [Ceph] (http://ceph.com).</p></li>
+<li><p>Follow the <a href="http://docs.ceph.com/docs/master/install/">Ceph Installation Guide</a> to install <a href="http://ceph.com">Ceph</a>.</p></li>
 
 <li><p>Configure Ceph with <a href="https://github.com/ceph/ceph-ansible">Ansible</a>.</p>
 
-<p><strong>Note</strong>: See the [README] (https://github.com/contiv/volplugin/blob/master/README.md#running-the-processes) for pre-configured VMs that work on any UNIX operating system to simplify Ceph installation.</p></li>
+<p><strong>Note</strong>: See the <a href="https://github.com/contiv/volplugin/blob/master/README.md#running-the-processes">README</a>
+for pre-configured VMs that work on any UNIX operating system to simplify
+Ceph installation.</p></li>
 
 <li><p>Upload a global configuration. You can find an example one <a href="https://github.com/contiv/volplugin/blob/master/systemtests/testdata/global1.json">here</a></p></li>
 
@@ -106,8 +117,9 @@
 <pre><code>volmaster &amp;
 </code></pre>
 
-<p><strong>Note</strong>: volmaster debug mode is very noisy and is not recommended. Therefore, avoid using it with background processes. volplugin currently connects to volmaster
-using port 9005, however in the future it is variable.</p>
+<p><strong>Note</strong>: volmaster debug mode is very noisy and is not recommended. Therefore,
+avoid using it with background processes. volplugin currently connects to
+volmaster using port 9005, however in the future it is variable.</p>
 
 <ol>
 <li>Start volsupervisor (as root):</li>
@@ -129,7 +141,7 @@ using port 9005, however in the future it is variable.</p>
 provide a ip:port pair to connect to over http. By default it connects to
 <code>127.0.0.1:9005</code>.</p>
 
-<h2 id="anameconfigureservicesaconfigureservicesahrefanameconfigureservicesaconfigureservicesidanameconfigureservicesaconfigureservicesclassdeeplinka"><a name="Configure Services"></a>Configure Services <a href="#<a name="Configure Services"></a>Configure Services" id="<a name="Configure Services"></a>Configure Services" class="deep-link">#</a></h2>
+<h2 id="configureservicesahrefconfigureservicesidconfigureservicesclassdeeplinka">Configure Services <a href="#Configure Services" id="Configure Services" class="deep-link">#</a></h2>
 
 <p>Ensure Ceph is fully operational, and that the <code>rbd</code> tool works as root.</p>
 
@@ -145,7 +157,7 @@ Examples of a policy are in <a href="https://github.com/contiv/volplugin/tree/ma
 
 <p>Create a volume that refers to the volplugin driver:</p>
 
-<pre><code>docker volume create -d volplugin policy1/test
+<pre><code>docker volume create -d volplugin --name policy1/test
 </code></pre>
 
 <p><strong>Notes</strong>:</p>
@@ -263,7 +275,8 @@ command set.</p>
 {
   "TTL": 60,
   "Debug": true,
-  "Timeout": 5
+  "Timeout": 5,
+  "MountPath": "/mnt/ceph"
 }
 </pre>
 
@@ -275,6 +288,9 @@ command set.</p>
 <li>Debug: boolean value indicating whether or not to enable debug traps/logging</li>
 
 <li>Timeout: time (in minutes) for a command to be terminated if it exceeds this value</li>
+
+<li>MountPath: the base path used for mount directories. Directories will be in
+<code>policy/volume</code> format off this root.</li>
 </ul>
 
 <h3 id="jsontenantconfiguration">JSON Tenant Configuration</h3>
@@ -286,7 +302,11 @@ as what pool to use. It is uploaded to etcd by the <code>volcli</code> tool.</p>
 
 <pre class="brush:javascript">
 {
-  "backend": "ceph",
+  "backends": {
+    "crud": "ceph",
+    "mount": "ceph",
+    "snapshot": "ceph"
+  },
   "driver": {
     "pool": "rbd"
   },
@@ -334,8 +354,18 @@ all volumes within this policy.</li>
 can use a <code>%</code> to be replaced with the device to format.</li></ul>
 </li>
 
-<li><code>backend</code>: the storage backend to use -- this will determine what features
-are supported and how the devices will be mounted.</li>
+<li><code>backends</code>: the storage backends to use for different operations. Note that
+not all drivers are compatible with each other. This is still an area with
+work being done on it. Currently only the "ceph" driver is supported.
+
+
+<ul>
+<li><code>crud</code>: Create/Delete operations driver name</li>
+
+<li><code>mount</code>: Mount operations driver name</li>
+
+<li><code>snapshot</code>: Snapshot operations</li></ul>
+</li>
 
 <li><code>driver</code>: driver-specific options.
 
