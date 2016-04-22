@@ -1,13 +1,20 @@
 # volplugin
-Contiv Volume plugin [volplugin](https://github.com/contiv/volplugin "Title") is a Ceph volume driver, and policy system that works well within a Docker ecosystem. It can automatically move your storage with your containers, rather than pinning containers to specific hosts to take advantage of their storage.
+Contiv Volume plugin [volplugin](https://github.com/contiv/volplugin "Title")
+is a Ceph volume driver, and policy system that works well within a Docker
+ecosystem. It can automatically move your storage with your containers, rather
+than pinning containers to specific hosts to take advantage of their storage.
 
 ## Getting started
 
-Getting started describes setting up a test environment with three VMs. Once the test environment is setup see the [**Configure Services**](#Configure Services).
+Getting started describes setting up a test environment with three VMs. Once
+the test environment is setup see the [**Configure Services**](#Configure Services).
 
 #### Prerequisites
 
-Please read and follow the instructions in the prerequisites section of the volplugin [README](https://github.com/contiv/volplugin/blob/master/README.md#prerequisites) before completing the following:
+Please read and follow the instructions in the prerequisites section of the
+volplugin
+[README](https://github.com/contiv/volplugin/blob/master/README.md#prerequisites)
+before completing the following:
 
 ### Clone and build the project
 
@@ -26,7 +33,8 @@ make run-build
 ```
 
 
-The command `make run-build` installs utilities for building the software in the `$GOPATH`, as well as the `volmaster`, `volplugin` and `volcli` utilities.
+The command `make run-build` installs utilities for building the software in
+the `$GOPATH`, as well as the `volmaster`, `volplugin` and `volcli` utilities.
 
 ### Everywhere else (with a VM):
 
@@ -50,19 +58,22 @@ The build and binaries will be on the VM in the following directory `/opt/golang
 
 ### Installing Dependencies
 
-Use the Contiv [nightly releases](https://github.com/contiv/volplugin/releases) when following these steps:
+Use the Contiv [nightly releases](https://github.com/contiv/volplugin/releases)
+when following these steps:
 
 **Note:** Using the nightly builds is simpler than building the applications.
 
 Install the dependencies in the following order:
 
-1. Follow the [Getting Started](https://github.com/coreos/etcd/releases/tag/v2.2.0) to install [Etcd] (https://coreos.com/etcd/docs/latest/getting-started-with-etcd.html).
+1. Follow the [Getting Started](https://github.com/coreos/etcd/releases/tag/v2.2.0) to install [Etcd](https://coreos.com/etcd/docs/latest/getting-started-with-etcd.html).
   * Currently versions 2.0 and later are supported.
 
-2. Follow the [Ceph Installation Guide](http://docs.ceph.com/docs/master/install/) to install [Ceph] (http://ceph.com).
+2. Follow the [Ceph Installation Guide](http://docs.ceph.com/docs/master/install/) to install [Ceph](http://ceph.com).
 3. Configure Ceph with [Ansible](https://github.com/ceph/ceph-ansible).
 
-  **Note**: See the [README] (https://github.com/contiv/volplugin/blob/master/README.md#running-the-processes) for pre-configured VMs that work on any UNIX operating system to simplify Ceph installation.
+  **Note**: See the [README](https://github.com/contiv/volplugin/blob/master/README.md#running-the-processes)
+  for pre-configured VMs that work on any UNIX operating system to simplify
+    Ceph installation.
 
 4. Upload a global configuration. You can find an example one [here](https://github.com/contiv/volplugin/blob/master/systemtests/testdata/global1.json)
 
@@ -72,8 +83,9 @@ Install the dependencies in the following order:
 volmaster &
 ```
 
-**Note**: volmaster debug mode is very noisy and is not recommended. Therefore, avoid using it with background processes. volplugin currently connects to volmaster
-using port 9005, however in the future it is variable.
+**Note**: volmaster debug mode is very noisy and is not recommended. Therefore,
+avoid using it with background processes. volplugin currently connects to
+volmaster using port 9005, however in the future it is variable.
 
 6. Start volsupervisor (as root):
 
@@ -94,7 +106,7 @@ If running volplugin on multiple hosts, use the `--master` flag to
 provide a ip:port pair to connect to over http. By default it connects to
 `127.0.0.1:9005`.
 
-## <a name="Configure Services"></a>Configure Services
+## Configure Services
 
 Ensure Ceph is fully operational, and that the `rbd` tool works as root.
 
@@ -114,7 +126,7 @@ Examples of a policy are in [systemtests/testdata](https://github.com/contiv/vol
 Create a volume that refers to the volplugin driver:
 
 ```
-docker volume create -d volplugin policy1/test
+docker volume create -d volplugin --name policy1/test
 ```
 
 **Notes**:
@@ -225,7 +237,8 @@ A global configuration looks like this:
 {
   "TTL": 60,
   "Debug": true,
-  "Timeout": 5
+  "Timeout": 5,
+  "MountPath": "/mnt/ceph"
 }
 ```
 
@@ -234,6 +247,8 @@ Options:
 * TTL: time (in seconds) for a mount record to timeout in the event a volplugin dies
 * Debug: boolean value indicating whether or not to enable debug traps/logging
 * Timeout: time (in minutes) for a command to be terminated if it exceeds this value
+* MountPath: the base path used for mount directories. Directories will be in
+  `policy/volume` format off this root.
 
 ### JSON Tenant Configuration
 
@@ -244,7 +259,11 @@ Here is an example:
 
 ```javascript
 {
-  "backend": "ceph",
+  "backends": {
+    "crud": "ceph",
+    "mount": "ceph",
+    "snapshot": "ceph"
+  },
   "driver": {
     "pool": "rbd"
   },
@@ -283,8 +302,12 @@ Let's go through what these parameters mean.
     all volumes within this policy.
 	* Referred to by the volume create-time parameter `filesystem`. Note that you
 	  can use a `%` to be replaced with the device to format.
-* `backend`: the storage backend to use -- this will determine what features
-	are supported and how the devices will be mounted.
+* `backends`: the storage backends to use for different operations. Note that
+  not all drivers are compatible with each other. This is still an area with
+  work being done on it. Currently only the "ceph" driver is supported.
+  * `crud`: Create/Delete operations driver name
+  * `mount`: Mount operations driver name
+  * `snapshot`: Snapshot operations
 * `driver`: driver-specific options.
 	* `pool`: the ceph pool to use
 * `create`: create-time options.
