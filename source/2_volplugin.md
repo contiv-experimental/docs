@@ -77,15 +77,16 @@ Install the dependencies in the following order:
 
 4. Upload a global configuration. You can find an example one [here](https://github.com/contiv/volplugin/blob/master/systemtests/testdata/global1.json)
 
-5. Start volmaster in debug mode (as root):
+5. Start volmaster (as root):
 
 ```
 volmaster &
 ```
 
-**Note**: volmaster debug mode is very noisy and is not recommended. Therefore,
-avoid using it with background processes. volplugin currently connects to
-volmaster using port 9005, however in the future it is variable.
+**Note**: volmaster debug mode is very noisy and is not recommended for
+production use. Therefore, avoid using it with background processes. volplugin
+currently connects to volmaster using port 9005, however in the future it is
+variables.
 
 6. Start volsupervisor (as root):
 
@@ -94,9 +95,9 @@ volsupervisor &
 ```
 
 
-**Note**: volsupervisor debug mode is very noisy and is not recommended.
+**Note**: volsupervisor debug mode is very noisy and is not recommended for production.
 
-7.  Start volplugin in debug mode (as root):
+7.  Start volplugin (as root):
 
 ```
 volplugin &
@@ -113,9 +114,8 @@ Ensure Ceph is fully operational, and that the `rbd` tool works as root.
 Upload a policy:
 
 ```
-volcli policy upload policy1
+volcli policy upload policy1 < mypolicy.json
 ```
-
 
 **Note**: It accepts the policy from stdin, e.g.: `volcli policy upload policy1 < mypolicy.json`
 Examples of a policy are in [systemtests/testdata](https://github.com/contiv/volplugin/tree/master/systemtests/testdata).
@@ -264,6 +264,7 @@ Here is an example:
     "mount": "ceph",
     "snapshot": "ceph"
   },
+  "unlocked": false,
   "driver": {
     "pool": "rbd"
   },
@@ -294,6 +295,9 @@ Here is an example:
 
 Let's go through what these parameters mean.
 
+* `unlocked`: removes the exclusive locks between mounts for a given volume.
+  * This is a protective measure and is *not needed* to use NFS, so this flag
+    will turn it off (by setting it to true) if desired for a given policy.
 * `filesystems`: a policy-level map of filesystem name -> mkfs command.
   * Commands are run when the filesystem is specified and the volume has not
     been created already.
@@ -304,7 +308,8 @@ Let's go through what these parameters mean.
 	  can use a `%` to be replaced with the device to format.
 * `backends`: the storage backends to use for different operations. Note that
   not all drivers are compatible with each other. This is still an area with
-  work being done on it. Currently only the "ceph" driver is supported.
+  work being done on it. Ceph and NFS are supported as `mount` options, `crud`
+  and `snapshot` operations require Ceph for now. Both driver names are lower-case.
   * `crud`: Create/Delete operations driver name
   * `mount`: Mount operations driver name
   * `snapshot`: Snapshot operations
@@ -357,6 +362,17 @@ The options are as follows:
 * `rate-limit.read.iops`: Read IOPS
 * `rate-limit.read.bps`: Read b/s
 * `rate-limit.write.bps`: Write b/s
+
+### NFS Support
+
+NFS support is still limited (at the time of this writing). To use the NFS
+support in its current state you must take a few steps.
+
+1. Ensure "nfs" is the "mount" backend for your policy. `crud` and `snapshot`
+should be empty.
+1. Create your volume with the remote mount path specified at create time:
+  * `docker volume create -d volplugin --name mypolicy/myvolume --opt mount=127.0.0.1:/mynfsmount`
+1. Mount and continue as normally.
 
 ## volcli Reference
 

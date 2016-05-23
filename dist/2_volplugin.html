@@ -111,15 +111,16 @@ Ceph installation.</p></li>
 
 <li><p>Upload a global configuration. You can find an example one <a href="https://github.com/contiv/volplugin/blob/master/systemtests/testdata/global1.json">here</a></p></li>
 
-<li><p>Start volmaster in debug mode (as root):</p></li>
+<li><p>Start volmaster (as root):</p></li>
 </ol>
 
 <pre><code>volmaster &amp;
 </code></pre>
 
-<p><strong>Note</strong>: volmaster debug mode is very noisy and is not recommended. Therefore,
-avoid using it with background processes. volplugin currently connects to
-volmaster using port 9005, however in the future it is variable.</p>
+<p><strong>Note</strong>: volmaster debug mode is very noisy and is not recommended for
+production use. Therefore, avoid using it with background processes. volplugin
+currently connects to volmaster using port 9005, however in the future it is
+variables.</p>
 
 <ol>
 <li>Start volsupervisor (as root):</li>
@@ -128,10 +129,10 @@ volmaster using port 9005, however in the future it is variable.</p>
 <pre><code>volsupervisor &amp;
 </code></pre>
 
-<p><strong>Note</strong>: volsupervisor debug mode is very noisy and is not recommended.</p>
+<p><strong>Note</strong>: volsupervisor debug mode is very noisy and is not recommended for production.</p>
 
 <ol>
-<li>Start volplugin in debug mode (as root):</li>
+<li>Start volplugin (as root):</li>
 </ol>
 
 <pre><code>volplugin &amp;
@@ -147,7 +148,7 @@ provide a ip:port pair to connect to over http. By default it connects to
 
 <p>Upload a policy:</p>
 
-<pre><code>volcli policy upload policy1
+<pre><code>volcli policy upload policy1 &lt; mypolicy.json
 </code></pre>
 
 <p><strong>Note</strong>: It accepts the policy from stdin, e.g.: <code>volcli policy upload policy1 &lt; mypolicy.json</code>
@@ -307,6 +308,7 @@ as what pool to use. It is uploaded to etcd by the <code>volcli</code> tool.</p>
     "mount": "ceph",
     "snapshot": "ceph"
   },
+  "unlocked": false,
   "driver": {
     "pool": "rbd"
   },
@@ -338,6 +340,14 @@ as what pool to use. It is uploaded to etcd by the <code>volcli</code> tool.</p>
 <p>Let's go through what these parameters mean.</p>
 
 <ul>
+<li><code>unlocked</code>: removes the exclusive locks between mounts for a given volume.
+
+
+<ul>
+<li>This is a protective measure and is <em>not needed</em> to use NFS, so this flag
+will turn it off (by setting it to true) if desired for a given policy.</li></ul>
+</li>
+
 <li><code>filesystems</code>: a policy-level map of filesystem name -> mkfs command.
 
 
@@ -356,7 +366,8 @@ can use a <code>%</code> to be replaced with the device to format.</li></ul>
 
 <li><code>backends</code>: the storage backends to use for different operations. Note that
 not all drivers are compatible with each other. This is still an area with
-work being done on it. Currently only the "ceph" driver is supported.
+work being done on it. Ceph and NFS are supported as <code>mount</code> options, <code>crud</code>
+and <code>snapshot</code> operations require Ceph for now. Both driver names are lower-case.
 
 
 <ul>
@@ -452,6 +463,26 @@ section for more information on this.</li>
 
 <li><code>rate-limit.write.bps</code>: Write b/s</li>
 </ul>
+
+<h3 id="nfssupport">NFS Support</h3>
+
+<p>NFS support is still limited (at the time of this writing). To use the NFS
+support in its current state you must take a few steps.</p>
+
+<ol>
+<li>Ensure "nfs" is the "mount" backend for your policy. <code>crud</code> and <code>snapshot</code>
+should be empty.</li>
+
+<li>Create your volume with the remote mount path specified at create time:</li>
+</ol>
+
+<ul>
+<li><code>docker volume create -d volplugin --name mypolicy/myvolume --opt mount=127.0.0.1:/mynfsmount</code></li>
+</ul>
+
+<ol>
+<li>Mount and continue as normally.</li>
+</ol>
 
 <h2 id="volclireferenceahrefvolclireferenceidvolclireferenceclassdeeplinka">volcli Reference <a href="#volcli Reference" id="volcli Reference" class="deep-link">#</a></h2>
 
