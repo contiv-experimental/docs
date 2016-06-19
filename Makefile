@@ -28,3 +28,7 @@ stop-doc-server:
 
 publish-docs: build-docs
 	git subtree push --prefix dist origin gh-pages
+
+generate-html:
+	mkdir -p html
+	for i in source/*.md; do pandoc --from markdown_github --to html < "$$i" > "html/$$(basename $$i).html"; done
